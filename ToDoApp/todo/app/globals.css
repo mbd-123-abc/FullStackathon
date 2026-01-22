@@ -1,0 +1,58 @@
+/*Mahika Bagri*/
+/*January 21 2026*/
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.Name {
+  font-size: 105px;
+  font-family: var(--font-title), cursive;
+  margin: 0;
+  color: #000000;
+  text-shadow: 0 0 10px #ffed4d;
+}
+
+/* Tagline */
+.Tagline {
+  margin-top: 0;             
+  font-size: 30px;
+  font-family: var(--font-tagline), cursive;
+  font-weight: 600;
+  color: #000000;
+  background-color: gold;
+  text-decoration: none;             
+  border-radius: 8px;
+  line-height: 15px;
+  width: fit-content;
+}
+.sparkle {
+  position: fixed;
+  width: 7px;
+  height: 7px;
+  background: #ffed4d;
+  border-radius: 50%;
+  animation: sparkleFade 500ms forwards;
+}
+
+@keyframes sparkleFade {
+  from {
+    transform: scale(1.5);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
