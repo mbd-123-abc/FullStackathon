@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*January 21 2026*/
+/*January 23 2026*/
 
 * {
   margin: 0;
@@ -14,6 +14,14 @@ main {
   justify-content: center;
   align-items: center;
   text-align: center;
+  padding: 25px;
+}
+
+page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
 }
 
 .Name {
@@ -24,7 +32,6 @@ main {
   text-shadow: 0 0 10px #ffed4d;
 }
 
-/* Tagline */
 .Tagline {
   margin-top: 0;             
   font-size: 30px;
@@ -46,6 +53,14 @@ main {
   animation: sparkleFade 500ms forwards;
 }
 
+.Title {
+  font-size: 85px;
+  font-family: var(--font-title), cursive;
+  margin: 30px;
+  color: #000000;
+  text-shadow: 0 0 10px #ffed4d;
+}
+
 @keyframes sparkleFade {
   from {
     transform: scale(1.5);
@@ -55,4 +70,107 @@ main {
     transform: scale(0);
     opacity: 0;
   }
+}
+
+.arenas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,345px);
+  gap: 3rem;
+  justify-content: center;
+}
+
+.arenas-card {
+  max-width: 345px;
+  background: rgb(222, 188, 230);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.arenas-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+}
+
+.card-header {
+  height: 230px;
+  background-color:#ffeab5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+}
+
+.card-header img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.card-body {
+  font-family: "Courier New";
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  max-height: 150px;
+  flex-direction: column;
+}
+
+.card-body h3 {
+  font-size: 25px;
+  margin-bottom: 15px;
+  color: var(--text-color);
+  background-color:rgb(222, 188, 230); 
+  color: black;
+
+}
+
+.card-body p {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.arenas-grid a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.input {
+  position: relative;
+  right: 25%;
+  width: 150%;
+  height: 50px;
+  font-size: 18px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.input:focus {
+  border-color: gold;
+  outline: none;
+}
+
+.button{
+  position: relative;
+  left: 7.5%;
+  width: 80%;
+  height: 55px;
+  font-size: 18px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid gold;
+  background-color:rgb(222, 188, 230);
+  margin-top: 35px;
+  margin-bottom: 150px;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
 }
