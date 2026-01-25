@@ -1,7 +1,7 @@
 #Mahika Bagri
-#January 23 2026
+#January 24 2026
 
-from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Sequence, CheckConstraint, create_engine
+from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Sequence, desc, create_engine
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 from datetime import date
 from enum import Enum, auto
@@ -36,7 +36,7 @@ class Arena(Base):
     __tablename__ = 'arenas'
     id = Column(Integer, Sequence('arena_id_sequence'), primary_key = True)
     name = Column(String(50), nullable = False)
-    goal =  Column(String(150), nullable = False)
+    goal =  Column(String(20), nullable = False)
     completion_status = Column(Boolean)
     theme_key = Column(String(50))
 
@@ -52,8 +52,8 @@ class Arena(Base):
         
         if not goal:
             raise ValueError("The goal of the arena cannot be empty.")
-        if len(goal) > 150:
-            raise ValueError("The goal of the arena cannot be longer than 150 characters.")
+        if len(goal) > 20:
+            raise ValueError("The goal of the arena cannot be longer than 20 characters.")
         
         try:
             Themes[theme_key]
@@ -68,12 +68,11 @@ class Arena(Base):
         session.commit()
 
     @classmethod
-    def delete(id):
-        arena_todos = session.query(Todo).filter(Todo.arena_key == id)
-        for arena_todo in arena_todos: 
-            Todo.delete(arena_todo.id)
+    def delete(cls, id):
+        session.query(Todo).filter(Todo.arena_key == id).delete()
 
-        session.get(Arena, id).delete()
+        arena = session.get(Arena, id)
+        session.delete(arena)
 
         session.commit()
     
@@ -117,6 +116,11 @@ def get_arena(id:int):
     arena = session.get(Arena, id)
     return arena
 
+@app.delete("/arena/{id}")
+def delete_arena(id:int):
+    Arena.delete(id)
+    return {"status": "arena deleted"}
+
 class Todo(Base):
     __tablename__ = 'todos'
     id = Column(Integer, primary_key = True)
@@ -129,10 +133,6 @@ class Todo(Base):
     arena_key = Column(Integer, ForeignKey('arenas.id'), nullable = True)
     arena = relationship('Arena', back_populates = "todos")
 
-    __table_args__ = (
-        CheckConstraint('length_minutes >= 0', name = 'length_non_negative'),
-    )
-
     @classmethod
     def check_data(cls, name, due_date, length_minutes, tag):
         if not name:
@@ -143,18 +143,18 @@ class Todo(Base):
         if due_date is not None and due_date < date.today():
             raise ValueError("The due date cannot be in the past.")
         
-        if length_minutes < 0:
+        if length_minutes is not None and length_minutes < 0:
             raise ValueError("The due date cannot be in the past.")
         
         if tag is not None and len(tag) > 50:
             raise ValueError("A tag cannot be longer than 50 characters.")
 
     @classmethod
-    def add(cls, name, due_date, length_minutes, tag):
+    def add(cls, name, due_date, length_minutes, tag, arena_key):
         Todo.check_data(name, due_date, length_minutes, tag)
                 
         session.add(Todo(name = name, due_date = due_date, length_minutes = length_minutes,
-                           completion_status = False, tag = tag))
+                           completion_status = False, tag = tag, arena_key = arena_key))
         session.commit()
 
     @classmethod
@@ -206,9 +206,10 @@ class TodosPy(BaseModel):
 
     name: str
     due_date: date = None
-    length_minutes: int = 0
+    length_minutes: int = None
     completion_status: bool = False
     tag: str = None
+    arena_key: int = None
 
 @app.post("/todo")
 def add(todo:TodosPy):
@@ -217,20 +218,25 @@ def add(todo:TodosPy):
     except ValueError as error:
         raise HTTPException(status_code = 400, detail = str(error))
     
-    Todo.add(todo.name, todo.due_date, todo.length_minutes, todo.tag)
+    Todo.add(todo.name, todo.due_date, todo.length_minutes, todo.tag, todo.arena_key)
 
     return {"status": "todo created"}
 
 @app.get("/todo/parking")
 def get_parking():
-    parking_todos = session.query(Todo).filter(Todo.arena_key.is_(None)).all()
-    return parking_todos
+    return session.query(Todo).filter(Todo.arena_key.is_(None)).all()
 
 @app.delete("/todo/parking")
 def get_parking():
-    parking_todos = session.query(Todo).filter(Todo.arena_key.is_(None)).delete()
+    session.query(Todo).filter(Todo.arena_key.is_(None)).delete()
     session.commit()
     
     return {"status": "todo cleared"}
+
+@app.get("/todo/{arena_key}")
+def get_parking(arena_key):
+    arena_todos = session.query(Todo).filter(Todo.arena_key == (arena_key)).all()
+    ordered_arena_todos = arena_todos.order_by(desc(Todo.due_date)).all()
+    return ordered_arena_todos
 
 Base.metadata.create_all(bind=engine)

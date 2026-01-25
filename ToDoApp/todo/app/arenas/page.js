@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*January 23 2026*/
+/*January 24 2026*/
 
 "use client";
 
@@ -21,6 +21,14 @@ export default function Page() {
       .then(res => res.json())
       .then(data => all_arenas(data))
   }, []);
+
+    const deleteArena = async (id) => {
+    const res = await fetch(`http://localhost:8000/arena/${id}`, {
+      method: "DELETE",
+    });
+    all_arenas((prev) => prev.filter((arena) => arena.id !== id));
+  };
+
   return (
     <page
       style={{
@@ -82,6 +90,15 @@ export default function Page() {
                   <h3>{arena.name}</h3>
                   <p>{arena.goal}</p>
                 </div>
+                <button className="cardButton"
+                    onClick={(e) => {
+                      e.preventDefault();   // stop navigation
+                      e.stopPropagation(); // extra safety
+                      deleteArena(arena.id);
+                    }}
+                >
+                  Delete
+                </button>
               </div>
             </Link>
           ))}

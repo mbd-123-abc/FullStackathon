@@ -174,3 +174,56 @@ page {
   display: flex;
   gap: 10px;
 }
+
+.homeButton{
+  background: transparent;
+  border: none;
+  transform: scale(0.6);
+  position: absolute;
+  top: -50px; 
+  left: -100px; 
+}
+
+.questsButton{
+  background: transparent;
+  border: none;
+  transform: scale(0.6);
+  position: absolute;
+  top: -40px; 
+  right: -80px; 
+}
+
+.goalButton{
+  background: transparent;
+  border: none;
+  width: auto;        
+}
+
+.goal {
+  font-size: 30px;
+  font-family: var(--font-tagline), cursive;
+  font-weight: 400;
+  color: #ffffff;
+  text-decoration: none; 
+  transform: translate(0%, -400%);
+}
+
+.goalContainer {
+  position: absolute;  
+  top: 600px; 
+  right: 35%;
+  display: inline-block;
+}
+
+.cardButton{
+    background-color:rgb(0, 0, 0);
+    height: 25px;
+    margin-top: -25px;
+    border: none;
+    color:rgb(222, 188, 230);
+}
+
+.flag{
+  background: transparent;
+  border: none;
+}

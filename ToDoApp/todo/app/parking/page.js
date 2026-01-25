@@ -1,10 +1,11 @@
 /*Mahika Bagri*/
-/*January 23 2026*/
+/*January 24 2026*/
 
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { FaRegSquare, FaRegSquareCheck } from "react-icons/fa6";
+import Link from "next/link";
 
 const ToDo = (props) => {
     const [isComplete, setIsComplete] = useState(false);
@@ -93,6 +94,11 @@ export default function Page() {
         backgroundSize: "fill",
       }}
     >
+      <Link href="/arenas">
+        <img className="homeButton"
+          src="/HomeButton.png"
+        />
+      </Link>
       <div className="App">
         <input 
         className = "input"
