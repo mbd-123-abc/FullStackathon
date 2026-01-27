@@ -81,7 +81,7 @@ page {
 
 .arenas-card {
   max-width: 345px;
-  background: rgb(222, 188, 230);
+  background: #c694f9;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -92,7 +92,7 @@ page {
 
 .arenas-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+  box-shadow: 8px 8px 8px #ffeab5;
 }
 
 .card-header {
@@ -123,13 +123,12 @@ page {
   font-size: 25px;
   margin-bottom: 15px;
   color: var(--text-color);
-  background-color:rgb(222, 188, 230); 
   color: black;
 
 }
 
 .card-body p {
-  color: #666;
+  color:#394248;
   line-height: 1.6;
   margin-bottom: 1.5rem;
 }
@@ -165,7 +164,7 @@ page {
   padding: 10px;
   border-radius: 8px;
   border: 1px solid gold;
-  background-color:rgb(222, 188, 230);
+  background-color:#c694f9;
   margin-top: 35px;
   margin-bottom: 150px;
 }
@@ -178,25 +177,26 @@ page {
 .homeButton{
   background: transparent;
   border: none;
-  transform: scale(0.6);
+  transform: scale(0.4);
   position: absolute;
-  top: -50px; 
+  top: -40px; 
   left: -100px; 
 }
 
 .questsButton{
   background: transparent;
   border: none;
-  transform: scale(0.6);
+  transform: scale(0.7);
   position: absolute;
   top: -40px; 
-  right: -80px; 
+  right: -55px; 
 }
 
 .goalButton{
   background: transparent;
   border: none;
-  width: auto;        
+  width: auto; 
+  transform: scale(0.4);       
 }
 
 .goal {
@@ -205,13 +205,12 @@ page {
   font-weight: 400;
   color: #ffffff;
   text-decoration: none; 
-  transform: translate(0%, -400%);
+  transform: translate(0%, -1500%);
 }
 
 .goalContainer {
   position: absolute;  
-  top: 600px; 
-  right: 35%;
+  top: 240px; 
   display: inline-block;
 }
 
@@ -226,4 +225,41 @@ page {
 .flag{
   background: transparent;
   border: none;
+}
+
+.taskTitle{
+  font-weight: 600;
+  font-size: 85px;
+  font-family: var(--font-tagline), cursive;
+  margin: 30px;
+  color: #000000;
+  text-shadow: 0 0 10px #ffffff;
+}
+
+.timerButton{
+  background: transparent;
+  border: none;
+  transform: scale(0.13);
+  position: absolute;
+  top: -410px; 
+  right: -650px;
+}
+
+.lotusBud{
+  background: transparent;
+  border: none;
+  position: absolute;
+  transform: scale(0.4);
+  top: 558px; 
+  left: 70px;
+  z-index: 2;
+}
+
+.timeBar{
+  background: transparent;
+  border: none;
+  position: absolute;
+  transform: scale(0.9);
+  top: 680px; 
+  right: 140px;
 }

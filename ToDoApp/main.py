@@ -113,8 +113,7 @@ def get_arenas():
 
 @app.get("/arena/{id}")
 def get_arena(id:int):
-    arena = session.get(Arena, id)
-    return arena
+    return session.get(Arena, id)
 
 @app.delete("/arena/{id}")
 def delete_arena(id:int):
@@ -233,10 +232,15 @@ def get_parking():
     
     return {"status": "todo cleared"}
 
-@app.get("/todo/{arena_key}")
-def get_parking(arena_key):
-    arena_todos = session.query(Todo).filter(Todo.arena_key == (arena_key)).all()
-    ordered_arena_todos = arena_todos.order_by(desc(Todo.due_date)).all()
-    return ordered_arena_todos
+@app.get("/todo/arena/{arena_key}")
+def get_arena_todos(arena_key):
+    return session.query(Todo).filter(Todo.arena_key == (arena_key)).order_by(desc(Todo.due_date)).all() 
+
+@app.get("/todo/{id}")
+def get_todo(id):
+    return session.get(Todo, id)
+
+#@app.patch(/todo)
+#def update_completion()
 
 Base.metadata.create_all(bind=engine)

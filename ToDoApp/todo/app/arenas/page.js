@@ -11,7 +11,7 @@ export default function Page() {
   const themeImages = {
     FORREST: "/ForrestCard.png",
     DAYDREAM: "/DaydreamCard.png",
-    STARRYNIGHT: "/NightPathCard.png",
+    STARRYNIGHT: "/NightCard.png",
     SAKURA: "/SakuraCard.png",
   };
 
@@ -46,7 +46,7 @@ export default function Page() {
             <div className="arenas-card">
               <div className="card-header">
                 <img
-                  src="/AddArena.png"
+                  src="/AddCard.png"
                 />
               </div>
               <div className="card-body">
@@ -63,7 +63,7 @@ export default function Page() {
             <div className="arenas-card">
               <div className="card-header">
                 <img
-                  src="/Parking.png"
+                  src="/ParkingCard.png"
                 />
               </div>
               <div className="card-body">

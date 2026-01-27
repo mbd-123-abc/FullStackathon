@@ -109,10 +109,16 @@ export default function Page() {
           onChange={updateInput}
         />
         <div className="button-row">
-
-          <button onClick={addTodo} className = "button">Enter</button>
-          <button onClick={clearTodo} className = "button">Clear</button>
-        
+          <button onClick={addTodo} className = "button">
+            <div className="Tagline">
+              Enter
+            </div>
+          </button>
+          <button onClick={clearTodo} className = "button">
+            <div className="Tagline">
+              Clear
+            </div>
+          </button>
         </div>
 
         <ul>

@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*January 24 2026*/
+/*January 25 2026*/
 
 "use client";
 
@@ -15,7 +15,7 @@ export default function Page() {
   const [todos, setTodos] = useState([]);
 
   useEffect(() => {
-    const fetchArenas = async () => {
+    const fetchArena = async () => {
       try {
         const res = await fetch(`http://localhost:8000/arena/${thisArenaId}`);
         const data = await res.json();
@@ -31,12 +31,12 @@ export default function Page() {
       }
     };
 
-    fetchArenas();
+    fetchArena();
   }, [thisArenaId]);
 
   useEffect(() => {
     const getTodos = async () => {
-        const res = await fetch(`http://localhost:8000/todo/${thisArenaId}`);
+        const res = await fetch(`http://localhost:8000/todo/arena/${thisArenaId}`);
         const data = await res.json();
         setTodos(data);
     };
@@ -64,15 +64,39 @@ export default function Page() {
       }}
     >
   {todos.map((todo, i) => {
-    const y = 850 + (i * 250);
+    const y = 900 + (i * 250);
     const x = 710;
     const dotColor = todo.completion_status
       ? "rgba(255, 200, 120, 1)" 
-      : "rgb(126, 121, 122)"; 
+      : "white"; 
     const dotGlow = todo.completion_status
       ? "0 0 8px rgba(255, 200, 120, 0.9)"
-      : "0 0 6px rgb(126, 121, 122)";
-      
+      : "0 0 6px white";
+
+    const flagImage = (
+      <div className = "flag"
+        style={{
+          position: "absolute",
+          top: y,
+          left: x,
+          transform: "translateX(-48%)",
+          zIndex: 10 + i,
+          width: "fit-content",
+          height: "fit-content",
+        }} 
+      >
+          <img
+            src="/PeachTodoFlag.png"
+            style={{
+              filter: todo.completion_status  
+                ? "none": 
+                "drop-shadow(0 0 12px rgba(255, 200, 120, 0.9))",
+              opacity: todo.completion_status ? .5 : 1,
+            }}
+          />
+        </div>
+    )
+
     return(
       <div key={todo.id}>
         {[1, 2, 3].map((_, j) => (
@@ -80,33 +104,22 @@ export default function Page() {
             key={j}
             style={{
               position: "absolute",
-              top: y + 120 - (j + 1) * 50,
+              top: y + 62 - (j + 1) * 50,
               left: x,
               width: 8,
               height: 8,
               borderRadius: "90%",
               background: dotColor,
               boxShadow: dotGlow,
+              zIndex: 20 + i
             }}
           />
         ))}
-
-        return (
-          <img
-            key={todo.id}
-            src="/PeachTodoFlag.png"
-            style={{
-              position: "absolute",
-              top: y,
-              left: x,
-              transform: "translateX(-50%)",
-              filter: todo.completion_status  
-                ? "none": 
-                "drop-shadow(0 0 12px rgba(255, 200, 120, 0.9))",
-              cursor: todo.completion_status ? "default" : "pointer",
-              opacity: todo.completion_status ? .5 : 1,
-            }}
-          />
+        {todo.completion_status? flagImage:
+          <Link href={`/taskPage?todoId=${todo.id}&arenaId=${thisArenaId}`}>
+            {flagImage}
+          </Link>
+        }
         </div>
         );
       })}
@@ -119,7 +132,7 @@ export default function Page() {
         <Link key={arena.id}
         href={`/todoForm?arenaId=${arena.id}`}>
           <img className="questsButton"
-            src="/QuestsButton.png"
+            src="/QuestButton.png"
           />
         </Link>
       )}

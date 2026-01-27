@@ -38,7 +38,7 @@ export default function Page() {
     const [tag, Tag] = useState("");
 
 const getTodos = async () => {
-    const res = await fetch(`http://localhost:8000/todo/${thisArenaId}`);
+    const res = await fetch(`http://localhost:8000/todo/arena/${thisArenaId}`);
     const data = await res.json();
     setTodos(data);
   };
