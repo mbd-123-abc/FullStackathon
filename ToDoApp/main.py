@@ -1,5 +1,5 @@
 #Mahika Bagri
-#January 27 2026
+#January 29 2026
 
 from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Sequence, desc, create_engine
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
@@ -26,47 +26,47 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class User(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, Sequence('user_id_sequence'), primary_key = True)
-    username = Column(String(50), nullable = False)
-    password = Column(String(20), nullable = False)
+# class User(Base):
+#     __tablename__ = 'users'
+#     id = Column(Integer, Sequence('user_id_sequence'), primary_key = True)
+#     username = Column(String(50), nullable = False)
+#     password = Column(String(20), nullable = False)
 
-    arenas = relationship('Arena', back_populates = 'users')
+#     arenas = relationship('Arena', back_populates = 'users')
 
-    @classmethod
-    def check_input(cls, username, password):
-        if not username:
-            raise ValueError("The username cannot be empty.")
-        if not password:
-            raise ValueError("The password cannot be empty.")
-        if(session.query(User).filter(User.username == username).exists()):
-            raise ValueError("Username taken; Please try another.")
-        if(password.contains('\'') or password.contains('\"') or 
-           password.contains(';') or password.contains('--') or
-           password.contains('*') or password.contains('\\') or 
-           password.contains('/') or password.contains('=') or 
-           password.contains('<') or password.contains('>')):
-            raise ValueError("Password cannot contain \', \", ;, --, *, \\, /, =, <, >")
+#     @classmethod
+#     def check_input(cls, username, password):
+#         if not username:
+#             raise ValueError("The username cannot be empty.")
+#         if not password:
+#             raise ValueError("The password cannot be empty.")
+#         if(session.query(User).filter(User.username == username).exists()):
+#             raise ValueError("Username taken; Please try another.")
+#         if(password.contains('\'') or password.contains('\"') or 
+#            password.contains(';') or password.contains('--') or
+#            password.contains('*') or password.contains('\\') or 
+#            password.contains('/') or password.contains('=') or 
+#            password.contains('<') or password.contains('>')):
+#             raise ValueError("Password cannot contain \', \", ;, --, *, \\, /, =, <, >")
         
-        @classmethod
-        def add(cls, username, password):
-            session.add(User(username, password))
-            session.commit()
+#         @classmethod
+#         def add(cls, username, password):
+#             session.add(User(username, password))
+#             session.commit()
 
-class UserPy(BaseModel):
-    username: str
-    password: str
+# class UserPy(BaseModel):
+#     username: str
+#     password: str
 
-@app.post("/user")
-def add(user: UserPy):
-    try:
-        User.check_input(user.username, user.password)
-    except ValueError as error:
-        raise HTTPException(status_code = 400, detail = str(error))
+# @app.post("/user")
+# def add(user: UserPy):
+#     try:
+#         User.check_input(user.username, user.password)
+#     except ValueError as error:
+#         raise HTTPException(status_code = 400, detail = str(error))
     
-    User.add(user.username, user.password)
-    return {"status": "user created"}
+#     User.add(user.username, user.password)
+#     return {"status": "user created"}
 
 class Themes(Enum):
     FORREST = auto()
@@ -83,8 +83,8 @@ class Arena(Base):
     theme_key = Column(String(50))
 
     todos = relationship('Todo', back_populates = 'arena')
-    user_key = Column(Integer, ForeignKey('users.id'), nullable = False)
-    user = relationship('User', back_populates = "arenas")
+    # user_key = Column(Integer, ForeignKey('users.id'), nullable = False)
+    # user = relationship('User', back_populates = "arenas")
 
     @classmethod
     def check_data(cls, name, goal, theme_key):
@@ -208,6 +208,22 @@ class Todo(Base):
 
 
     @classmethod
+    def update_completion_status(cls, id, completion_status = True):
+
+        this = session.get(Todo, id)
+        this.completion_status = completion_status
+        
+        session.commit()
+
+    @classmethod
+    def update_length(cls, id, length_minutes=0):
+
+        this = session.get(Todo, id)
+        this.length_minutes = length_minutes
+        
+        session.commit()
+        
+    @classmethod
     def update(id, name, due_date = None, length_minutes = None, completion_status = False,
                 tag = None):
         Todo.check_data(name, due_date, length_minutes, tag)
@@ -260,7 +276,21 @@ def get_arena_todos(arena_key):
 def get_todo(id):
     return session.get(Todo, id)
 
-#@app.patch(/todo)
-#def update_completion()
+@app.patch("/todo/{id}")
+def update_completion(id):
+    todo = session.get(Todo, id)
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+    
+    todo.update_completion_status(id, True)
+    return {"status": "todo updated"}
+
+@app.patch("/todo/{id}/{length_minutes}")
+def update_length(id, length_minutes):
+    todo = session.get(Todo, id)
+    
+    todo.update_length(id, length_minutes)
+    return {"status": "todo updated"}
+
 
 Base.metadata.create_all(bind=engine)

@@ -44,6 +44,20 @@ page {
   line-height: 15px;
   width: fit-content;
 }
+
+.menuTagline {
+  margin-top:50px;             
+  font-size: 30px;
+  font-family: var(--font-tagline), cursive;
+  font-weight: 200;
+  color: #ffffff;
+  text-decoration: none;             
+  border-radius: 8px;
+  line-height: 15px;
+  width: fit-content;
+  z-index: 4;
+}
+
 .sparkle {
   position: fixed;
   width: 7px;
@@ -167,6 +181,7 @@ page {
   background-color:#c694f9;
   margin-top: 35px;
   margin-bottom: 150px;
+  z-index: 4;
 }
 
 .button-row {
@@ -181,6 +196,17 @@ page {
   position: absolute;
   top: -40px; 
   left: -100px; 
+  z-index: 4;
+}
+
+.homeMenuButton{
+  background: transparent;
+  border: none;
+  transform: scale(0.4);
+  position: absolute;
+  top: 120px; 
+  right: 180px; 
+  z-index: 4;
 }
 
 .questsButton{
@@ -253,6 +279,7 @@ page {
   top: 558px; 
   left: 70px;
   z-index: 2;
+  transition: left 1s linear;
 }
 
 .timeBar{
@@ -262,4 +289,42 @@ page {
   transform: scale(0.9);
   top: 680px; 
   right: 140px;
+}
+
+.menuBoard{
+  background: transparent;
+  border: none;
+  position: absolute;
+  transform: scale(1.5);
+  top: 120px;
+  z-index: 3;
+}
+
+.menuButton{
+  background: transparent;
+  border: none;
+  position: absolute;
+  transform: scale(.13);
+  top: -410px; 
+  right: 550px; 
+  z-index: 4;
+}
+
+.reminder{
+  position: relative;
+  left: -150px;
+  margin-top:15px;             
+  font-size: 20px;
+  font-family: var(--font-tagline), cursive;
+  font-weight: 200;
+  color: #ffffff;
+  text-decoration: none;             
+  line-height: 15px;
+  width: fit-content;
+  z-index: 4;
+}
+
+.reminders {
+  margin-top:300px;
+  z-index: 4;
 }
