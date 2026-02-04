@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*January 25 2026*/
+/*January 30 2026*/
 
 "use client";
 
@@ -67,10 +67,10 @@ export default function Page() {
     const y = 900 + (i * 250);
     const x = 710;
     const dotColor = todo.completion_status
-      ? "rgb(234, 184, 108)" 
+      ? "#d28336" 
       : "white"; 
     const dotGlow = todo.completion_status
-      ? "0 0 8px rgba(255, 200, 120, 0.9)"
+      ? "0 0 6px #fedd85)"
       : "0 0 6px white";
 
     const flagImage = (

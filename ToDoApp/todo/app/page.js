@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*January 21 2026*/
+/*January 30 2026*/
 
 "use client";
 import Link from "next/link";
@@ -26,7 +26,7 @@ export default function Page() {
       <header className="Name">
         Kriyarthika Arena
       </header>
-      <Link href="/arenas" className="Tagline">
+      <Link href="/accountForm" className="Tagline">
         Choose Your Own Progress
       </Link>
     </main>

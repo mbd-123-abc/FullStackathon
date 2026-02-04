@@ -1,13 +1,19 @@
 #Mahika Bagri
-#January 29 2026
+#February 3 2026
 
 from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Sequence, desc, create_engine
-from sqlalchemy.orm import sessionmaker, relationship, declarative_base
-from datetime import date
+from sqlalchemy.orm import sessionmaker, relationship, declarative_base, Session
+from starlette import status
+from datetime import date, timedelta, datetime
 from enum import Enum, auto
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, APIRouter, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
+from pydantic import BaseModel
+from passlib.hash import argon2 
+from passlib.context import CryptContext
+from jose import jwt, JWTError
+from something import SECRET_KEY, ALGORITHM
 
 engine = create_engine('sqlite:///orm.db')
 
@@ -25,48 +31,71 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# class User(Base):
-#     __tablename__ = 'users'
-#     id = Column(Integer, Sequence('user_id_sequence'), primary_key = True)
-#     username = Column(String(50), nullable = False)
-#     password = Column(String(20), nullable = False)
-
-#     arenas = relationship('Arena', back_populates = 'users')
-
-#     @classmethod
-#     def check_input(cls, username, password):
-#         if not username:
-#             raise ValueError("The username cannot be empty.")
-#         if not password:
-#             raise ValueError("The password cannot be empty.")
-#         if(session.query(User).filter(User.username == username).exists()):
-#             raise ValueError("Username taken; Please try another.")
-#         if(password.contains('\'') or password.contains('\"') or 
-#            password.contains(';') or password.contains('--') or
-#            password.contains('*') or password.contains('\\') or 
-#            password.contains('/') or password.contains('=') or 
-#            password.contains('<') or password.contains('>')):
-#             raise ValueError("Password cannot contain \', \", ;, --, *, \\, /, =, <, >")
         
-#         @classmethod
-#         def add(cls, username, password):
-#             session.add(User(username, password))
-#             session.commit()
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key = True)
+    username = Column(String(50), nullable = False)
+    password = Column(String(225), nullable = False)
 
-# class UserPy(BaseModel):
-#     username: str
-#     password: str
+    arenas = relationship('Arena', back_populates = 'user')
+    todos = relationship('Todo', back_populates = 'user')
 
-# @app.post("/user")
-# def add(user: UserPy):
-#     try:
-#         User.check_input(user.username, user.password)
-#     except ValueError as error:
-#         raise HTTPException(status_code = 400, detail = str(error))
+    @classmethod
+    def check_password(cls, username, password):
+        user = session.query(User).filter(User.username == username).first()
+        if not argon2.verify(password,user.password):
+            user = False
+            raise HTTPException(status_code=401)
+        
+        return user
+
+
+    @classmethod
+    def check_input(cls, username, password):
+        if not username:
+            raise ValueError("The username cannot be empty.")
+        if not password:
+            raise ValueError("The password cannot be empty.")
+        if len(password) < 8:
+            raise ValueError("The password cannot be shorter than 8 characters.")
+        if(session.query(User).filter(User.username == username).first()):
+            raise ValueError("Username taken; Please try another.")
+        if("'" in password or '"' in password or ';' in password or '--' in password or
+        '*' in password or '\\' in password or '/' in password or '=' in password or
+        '<' in password or '>' in password):
+            raise ValueError("Password cannot contain \', \", ;, --, *, \\, /, =, <, >")
+        
+    @classmethod
+    def add(cls, username, password):
+        hash = argon2.hash(password)
+
+        session.add(User(username = username, password = hash))
+        session.commit()
+
+class UserPy(BaseModel):
+    username: str
+    password: str
+
+@app.post("/user")
+def add(user: UserPy):
+    try:
+        User.check_input(user.username, user.password)
+    except ValueError as error:
+        raise HTTPException(status_code = 400, detail = str(error))
     
-#     User.add(user.username, user.password)
-#     return {"status": "user created"}
+    User.add(user.username, user.password)
+    return {"status": "user created"}
+
+@app.post("/user/login")
+def post(username, password):
+    try:
+        User.check_password(username, password)
+    except ValueError as error:
+        raise HTTPException(status_code = 401, detail = str(error))
+    
+    User.get(User, id)
+    return {"status": "user verified"}
 
 class Themes(Enum):
     FORREST = auto()
@@ -76,15 +105,15 @@ class Themes(Enum):
 
 class Arena(Base):
     __tablename__ = 'arenas'
-    id = Column(Integer, Sequence('arena_id_sequence'), primary_key = True)
+    id = Column(Integer, primary_key = True)
     name = Column(String(50), nullable = False)
     goal =  Column(String(20), nullable = False)
     completion_status = Column(Boolean)
     theme_key = Column(String(50))
 
+    user_key = Column(Integer, ForeignKey('users.id'), nullable = False)
     todos = relationship('Todo', back_populates = 'arena')
-    # user_key = Column(Integer, ForeignKey('users.id'), nullable = False)
-    # user = relationship('User', back_populates = "arenas")
+    user = relationship('User', back_populates = "arenas")
 
     @classmethod
     def check_data(cls, name, goal, theme_key):
@@ -105,10 +134,10 @@ class Arena(Base):
             raise ValueError("The theme is unavailable.")
         
     @classmethod
-    def add(cls, name, goal, completion_status = False, theme_key = "FORREST"):
+    def add(cls, name, goal, completion_status, theme_key, user_key):
         Arena.check_data(name, goal, theme_key)
 
-        session.add(Arena(name = name, goal = goal, completion_status = completion_status, theme_key = theme_key))
+        session.add(Arena(name = name, goal = goal, completion_status = completion_status, theme_key = theme_key, user_key = user_key))
         session.commit()
 
     @classmethod
@@ -138,6 +167,7 @@ class ArenaPy(BaseModel):
     goal: str
     theme_key: str = "FORREST"
     completion_status: bool = False
+    user_key: int
 
 @app.post("/arena")
 def add(arena:ArenaPy):
@@ -146,7 +176,7 @@ def add(arena:ArenaPy):
     except ValueError as error:
         raise HTTPException(status_code = 400, detail = str(error))
     
-    Arena.add(arena.name, arena.goal, arena.completion_status, arena.theme_key)
+    Arena.add(arena.name, arena.goal, arena.completion_status, arena.theme_key, arena.user_key)
 
     return {"status": "arena created"}
 
@@ -174,7 +204,9 @@ class Todo(Base):
     tag = Column(String(50))
 
     arena_key = Column(Integer, ForeignKey('arenas.id'), nullable = True)
+    user_key = Column(Integer, ForeignKey('users.id'), nullable = False)
     arena = relationship('Arena', back_populates = "todos")
+    user = relationship('User', back_populates = "todos")
 
     @classmethod
     def check_data(cls, name, due_date, length_minutes, tag):
@@ -187,17 +219,17 @@ class Todo(Base):
             raise ValueError("The due date cannot be in the past.")
         
         if length_minutes is not None and length_minutes < 0:
-            raise ValueError("The due date cannot be in the past.")
+            raise ValueError("The length cannot be less than 0.")
         
         if tag is not None and len(tag) > 50:
             raise ValueError("A tag cannot be longer than 50 characters.")
 
     @classmethod
-    def add(cls, name, due_date, length_minutes, tag, arena_key):
+    def add(cls, name, due_date, length_minutes, tag, arena_key, user_key):
         Todo.check_data(name, due_date, length_minutes, tag)
                 
         session.add(Todo(name = name, due_date = due_date, length_minutes = length_minutes,
-                           completion_status = False, tag = tag, arena_key = arena_key))
+                           completion_status = False, tag = tag, arena_key = arena_key, user_key = user_key))
         session.commit()
 
     @classmethod
@@ -217,6 +249,8 @@ class Todo(Base):
 
     @classmethod
     def update_length(cls, id, length_minutes=0):
+        if length_minutes is not None and length_minutes < 0:
+            raise ValueError("The length cannot be less than 0.")
 
         this = session.get(Todo, id)
         this.length_minutes = length_minutes
@@ -245,6 +279,7 @@ class TodosPy(BaseModel):
     completion_status: bool = False
     tag: str = None
     arena_key: int = None
+    user_key: int
 
 @app.post("/todo")
 def add(todo:TodosPy):
@@ -253,7 +288,7 @@ def add(todo:TodosPy):
     except ValueError as error:
         raise HTTPException(status_code = 400, detail = str(error))
     
-    Todo.add(todo.name, todo.due_date, todo.length_minutes, todo.tag, todo.arena_key)
+    Todo.add(todo.name, todo.due_date, todo.length_minutes, todo.tag, todo.arena_key, todo.user_key)
 
     return {"status": "todo created"}
 
@@ -286,7 +321,7 @@ def update_completion(id):
     return {"status": "todo updated"}
 
 @app.patch("/todo/{id}/{length_minutes}")
-def update_length(id, length_minutes):
+def update_length(id, length_minutes:int):
     todo = session.get(Todo, id)
     
     todo.update_length(id, length_minutes)

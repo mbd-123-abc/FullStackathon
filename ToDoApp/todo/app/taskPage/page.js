@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*January 29 2026*/
+/*February 1 2026*/
 
 "use client";
 
@@ -51,8 +51,14 @@ export default function Page() {
     const update_length = async (e) => {
         e.preventDefault()
         /* need to show/throw error*/
+        const newLength =
+          timeLeft > 0
+            ? Math.floor(timeLeft / 60) + length
+            : length;
+
+        console.log("newLength:", newLength, typeof newLength);
+
         try{
-          const newLength = (timeLeft/60)+length;
             const res = await fetch(`http://localhost:8000/todo/${thisTodoId}/${newLength}`, {
                 method: "PATCH",
                 headers: {
@@ -69,7 +75,9 @@ export default function Page() {
         } catch (errors) {
             setError("Servers Unreachable. Try again later.")
         }
-        router.push(`/taskPage?todoId=${todo.id}&arenaId=${thisArenaId}`);
+          setTimeLeft(newLength * 60);
+          Length(0);
+
     };
 
   useEffect(() => {
@@ -200,22 +208,23 @@ export default function Page() {
             left: "560px",
             width: "80px",
             height: "40px",
-            "z-index": "4",
+            zIndex: "4",
           }}
             type="number"
             placeholder="Task Length"
             value={length}
-            onChange={(e) => Length(e.target.value)}
+            onChange={(e) => Length(Number(e.target.value))}
             className="input"
           />
           <button 
           onClick={update_length}
            className = "button"
            style={{ 
+              position: "absolute",
               width: "80px",
               height: "40px",
-              top: "112px",
-              left: "-30px",
+              top: "436px",
+              left: "650px",
             }}
           >
             <div className="Tagline">
@@ -252,8 +261,10 @@ export default function Page() {
            style={{ 
               width: "80px",
               height: "40px",
-              top: "-45px",
-              left: "140px",
+              position: "absolute",
+              top: "505px",
+              left: "820px",
+
             }}
           >
             <div className="Tagline">
