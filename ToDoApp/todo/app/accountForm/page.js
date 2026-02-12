@@ -42,7 +42,7 @@ export default function Page(){
         e.preventDefault()
         /* need to show/throw error*/
         try{
-            const res = await fetch("http://localhost:8000/user/login", {
+            const res = await fetch("http://localhost:8000/token", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
