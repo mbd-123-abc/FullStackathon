@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 1 2026*/
+/*February 12 2026*/
 
 "use client";
 
@@ -32,7 +32,8 @@ export default function Page() {
             const res = await fetch(`http://localhost:8000/todo/${thisTodoId}`, {
                 method: "PATCH",
                 headers: {
-                    "Content-Type": "application/json",
+                  Authorization: `Bearer ${localStorage.getItem("token")}`,
+                  "Content-Type": "application/json",
                 },
             });
             
@@ -62,7 +63,8 @@ export default function Page() {
             const res = await fetch(`http://localhost:8000/todo/${thisTodoId}/${newLength}`, {
                 method: "PATCH",
                 headers: {
-                    "Content-Type": "application/json",
+                   Authorization: `Bearer ${localStorage.getItem("token")}`,
+                  "Content-Type": "application/json",
                 },
             });
             
@@ -110,7 +112,11 @@ export default function Page() {
     useEffect(() => {
         const fetchTodo = async () => {
         try {
-            const res = await fetch(`http://localhost:8000/todo/${thisTodoId}`);
+            const res = await fetch(`http://localhost:8000/todo/${thisTodoId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
             const data = await res.json();
 
             if (!res.ok) {

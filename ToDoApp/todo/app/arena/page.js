@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*January 30 2026*/
+/*February 12 2026*/
 
 "use client";
 
@@ -17,7 +17,11 @@ export default function Page() {
   useEffect(() => {
     const fetchArena = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/arena/${thisArenaId}`);
+        const res = await fetch(`http://localhost:8000/arena/${thisArenaId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         const data = await res.json();
 
         if (!res.ok) {
@@ -36,7 +40,11 @@ export default function Page() {
 
   useEffect(() => {
     const getTodos = async () => {
-        const res = await fetch(`http://localhost:8000/todo/arena/${thisArenaId}`);
+        const res = await fetch(`http://localhost:8000/todo/arena/${thisArenaId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         const data = await res.json();
         setTodos(data);
     };

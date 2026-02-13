@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 11 2026*/
+/*February 12 2026*/
 
 "use client";
 
@@ -54,20 +54,21 @@ export default function Page(){
             });
             
             const data = await res.json();
-            localStorage.setItem("token", data.access_token);
 
             if (!res.ok) {
                 setError(data.detail);
             return;
             }
+
+            localStorage.setItem("token", data.access_token);
+            router.push("/arenas");
+            
         } catch (errors) {
             setError("Servers Unreachable. Try again later.")
         }
 
     Username("");
     Password("");
-
-    router.push("/arenas");
 
     };
 

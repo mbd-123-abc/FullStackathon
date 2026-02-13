@@ -42,7 +42,7 @@ def get_db():
         db.close()
 
 class Token(BaseModel):
-    token: str
+    access_token: str
     token_type: str
 
 class TokenData(BaseModel):
@@ -122,7 +122,7 @@ class UserPy(BaseModel):
 
 def get_user(token:str = Depends(scheme), db: Session = Depends(get_db)):
     token_data = verify_token(token) 
-    user = db.query(User).filter(User.username == token_data.username)
+    user = db.query(User).filter(User.username == token_data.username).first()
     if user is None:
             raise HTTPException(status_code=401)
     return user
@@ -197,32 +197,47 @@ class Arena(Base):
             raise ValueError("The theme is unavailable.")
         
     @classmethod
-    def add(cls, name, goal, completion_status, theme_key, user_key):
+    def add(cls, db, curr_user, name, goal, completion_status, theme_key):
         Arena.check_data(name, goal, theme_key)
 
-        session.add(Arena(name = name, goal = goal, completion_status = completion_status, theme_key = theme_key, user_key = user_key))
-        session.commit()
+        db.add(Arena(name = name, goal = goal, completion_status = completion_status, theme_key = theme_key, user_key = curr_user.id))
+        db.commit()
 
     @classmethod
-    def delete(cls, id):
-        session.query(Todo).filter(Todo.arena_key == id).delete()
+    def delete(cls, db, curr_user, id):
+        arena = db.get(Arena, id)
 
-        arena = session.get(Arena, id)
-        session.delete(arena)
+        if not curr_user: 
+            raise HTTPException(status_code=401, detail="Please log in.")
+        if not arena: 
+            raise HTTPException(status_code=404, detail="Arena doesn't exist.")
+        if arena.user_key != curr_user.id:
+            raise HTTPException(status_code=403, detail="Permission denied.")
 
-        session.commit()
+        db.query(Todo).filter(Todo.arena_key == id).delete()
+        db.delete(arena)
+
+        db.commit()
     
     @classmethod
-    def update(id, name, goal, completion_status = False, theme_key = "FORREST"):
+    def update(db, curr_user, id, name, goal, completion_status = False, theme_key = "FORREST"):
         Arena.check_data(name, goal, theme_key)
 
-        this = session.get(Arena, id)
-        this.name = name
-        this.goal = goal
-        this.completion_status = completion_status
-        this.theme_key = theme_key
+        arena = db.get(Arena, id)
+
+        if not curr_user: 
+            raise HTTPException(status_code=401, detail="Please log in.")
+        if not arena: 
+            raise HTTPException(status_code=404, detail="Arena doesn't exist.")
+        if arena.user_key != curr_user.id:
+            raise HTTPException(status_code=403, detail="Permission denied.")
+
+        arena.name = name
+        arena.goal = goal
+        arena.completion_status = completion_status
+        arena.theme_key = theme_key
         
-        session.commit()
+        db.commit()
 
 class ArenaPy(BaseModel):
 
@@ -230,31 +245,43 @@ class ArenaPy(BaseModel):
     goal: str
     theme_key: str = "FORREST"
     completion_status: bool = False
-    user_key: int
 
 @app.post("/arena")
-def add(arena:ArenaPy):
+def add(arena:ArenaPy, curr_user: User = Depends(get_user), db: Session = Depends(get_db)):
     try:
         Arena.check_data(arena.name, arena.goal, arena.theme_key)
     except ValueError as error:
         raise HTTPException(status_code = 400, detail = str(error))
     
-    Arena.add(arena.name, arena.goal, arena.completion_status, arena.theme_key, arena.user_key)
+    if not curr_user: 
+            raise HTTPException(status_code=401, detail="Please log in.")
+    
+    Arena.add(db, curr_user, arena.name, arena.goal, arena.completion_status, arena.theme_key)
 
     return {"status": "arena created"}
 
 @app.get("/arena")
-def get_arenas():
-    all_arenas = session.query(Arena).all()
+def get_arenas(curr_user: User = Depends(get_user),db: Session = Depends(get_db)):
+    if not curr_user: 
+            raise HTTPException(status_code=401, detail="Please log in.")
+    
+    all_arenas = db.query(Arena).filter(Arena.user_key == curr_user.id).all()
     return all_arenas
 
 @app.get("/arena/{id}")
-def get_arena(id:int):
-    return session.get(Arena, id)
+def get_arena(id:int, curr_user: User = Depends(get_user),db: Session = Depends(get_db)):
+    if not curr_user: 
+            raise HTTPException(status_code=401, detail="Please log in.")
+    
+    return db.get(Arena, id)
 
 @app.delete("/arena/{id}")
-def delete_arena(id:int):
-    Arena.delete(id)
+def delete_arena(id:int, curr_user: User = Depends(get_user),db: Session = Depends(get_db)):
+    try:
+        Arena.delete(db, curr_user, id)
+    except Exception as error:
+        raise error
+    
     return {"status": "arena deleted"}
 
 class Todo(Base):
@@ -288,51 +315,83 @@ class Todo(Base):
             raise ValueError("A tag cannot be longer than 50 characters.")
 
     @classmethod
-    def add(cls, name, due_date, length_minutes, tag, arena_key, user_key):
+    def add(cls, db, curr_user, name, due_date, length_minutes, tag, arena_key):
         Todo.check_data(name, due_date, length_minutes, tag)
-                
-        session.add(Todo(name = name, due_date = due_date, length_minutes = length_minutes,
-                           completion_status = False, tag = tag, arena_key = arena_key, user_key = user_key))
-        session.commit()
+           
+        db.add(Todo(name = name, due_date = due_date, length_minutes = length_minutes,
+                           completion_status = False, tag = tag, arena_key = arena_key, user_key = curr_user.id))
+        db.commit()
 
     @classmethod
-    def delete(cls, id):
-        todo = session.get(id)
-        session.delete(todo)
-        session.commit()
+    def delete(cls, db, curr_user, id):
+        todo = db.get(id)
 
-
-    @classmethod
-    def update_completion_status(cls, id, completion_status = True):
-
-        this = session.get(Todo, id)
-        this.completion_status = completion_status
+        if not curr_user: 
+            raise HTTPException(status_code=401, detail="Please log in.")
+        if not todo: 
+            raise HTTPException(status_code=404, detail="Todo doesn't exist.")
+        if todo.user_key != curr_user.id: 
+            raise HTTPException(status_code=403, detail="Permission denied.")
         
-        session.commit()
+        db.delete(todo)
+        db.commit()
+
 
     @classmethod
-    def update_length(cls, id, length_minutes=0):
+    def update_completion_status(cls, db, curr_user, id, completion_status = True):
+
+        todo = db.get(Todo, id)
+
+        if not curr_user: 
+            raise HTTPException(status_code=401, detail="Please log in.")
+        if not todo: 
+            raise HTTPException(status_code=404, detail="Todo doesn't exist.")
+        if todo.user_key != curr_user.id: 
+            raise HTTPException(status_code=403, detail="Permission denied.")
+
+        todo.completion_status = completion_status
+        
+        db.commit()
+
+    @classmethod
+    def update_length(cls, db, curr_user, id, length_minutes=0):
         if length_minutes is not None and length_minutes < 0:
             raise ValueError("The length cannot be less than 0.")
 
-        this = session.get(Todo, id)
-        this.length_minutes = length_minutes
+        todo = db.get(Todo, id)
+
+        if not curr_user: 
+            raise HTTPException(status_code=401, detail="Please log in.")
+        if not todo: 
+            raise HTTPException(status_code=404, detail="Todo doesn't exist.")
+        if todo.user_key != curr_user.id: 
+            raise HTTPException(status_code=403, detail="Permission denied.")
+
+        todo.length_minutes = length_minutes
         
-        session.commit()
+        db.commit()
         
     @classmethod
-    def update(id, name, due_date = None, length_minutes = None, completion_status = False,
+    def update(id, db, curr_user, name, due_date = None, length_minutes = None, completion_status = False,
                 tag = None):
         Todo.check_data(name, due_date, length_minutes, tag)
 
-        this = session.get(Todo, id)
-        this.name = name
-        this.due_date = due_date
-        this.length_minutes = length_minutes
-        this.completion_status = completion_status
-        this.tag = tag
+        todo = db.get(Todo, id)
+
+        if not curr_user: 
+            raise HTTPException(status_code=401, detail="Please log in.")
+        if not todo: 
+            raise HTTPException(status_code=404, detail="Todo doesn't exist.")
+        if todo.user_key != curr_user.id: 
+            raise HTTPException(status_code=403, detail="Permission denied.")
+
+        todo.name = name
+        todo.due_date = due_date
+        todo.length_minutes = length_minutes
+        todo.completion_status = completion_status
+        todo.tag = tag
         
-        session.commit()
+        db.commit()
 
 class TodosPy(BaseModel):
 
@@ -342,52 +401,85 @@ class TodosPy(BaseModel):
     completion_status: bool = False
     tag: str = None
     arena_key: int = None
-    user_key: int
 
 @app.post("/todo")
-def add(todo:TodosPy):
+def add(todo:TodosPy, curr_user: User = Depends(get_user), db: Session = Depends(get_db)):
+    if not curr_user: 
+            raise HTTPException(status_code=401, detail="Please log in.")
+    
     try:
         Todo.check_data(todo.name, todo.due_date, todo.length_minutes, todo.tag)
     except ValueError as error:
         raise HTTPException(status_code = 400, detail = str(error))
     
-    Todo.add(todo.name, todo.due_date, todo.length_minutes, todo.tag, todo.arena_key, todo.user_key)
+    Todo.add(db, curr_user, todo.name, todo.due_date, todo.length_minutes, todo.tag, todo.arena_key)
 
     return {"status": "todo created"}
 
 @app.get("/todo/parking")
-def get_parking():
-    return session.query(Todo).filter(Todo.arena_key.is_(None)).all()
+def get_parking(curr_user: User = Depends(get_user), db: Session = Depends(get_db)):
+    if not curr_user: 
+        raise HTTPException(status_code=401, detail="Please log in.")
+    
+    return db.query(Todo).filter(curr_user.id == Todo.user_key).filter(Todo.arena_key.is_(None)).all()
 
 @app.delete("/todo/parking")
-def clear_parking():
-    session.query(Todo).filter(Todo.arena_key.is_(None)).delete()
-    session.commit()
+def clear_parking(curr_user: User = Depends(get_user), db: Session = Depends(get_db)):
+    if not curr_user: 
+        raise HTTPException(status_code=401, detail="Please log in.")
+    
+    db.query(Todo).filter(curr_user.id == Todo.user_key).filter(Todo.arena_key.is_(None)).delete()
+    db.commit()
     
     return {"status": "todo cleared"}
 
 @app.get("/todo/arena/{arena_key}")
-def get_arena_todos(arena_key):
-    return session.query(Todo).filter(Todo.arena_key == (arena_key)).order_by(desc(Todo.due_date)).all() 
+def get_arena_todos(arena_key, curr_user: User = Depends(get_user), db: Session = Depends(get_db)):
+    arena = db.query(Arena).filter(Arena.id == arena_key).first()
+
+    if not curr_user: 
+        raise HTTPException(status_code=401, detail="Please log in.")
+    if not arena: 
+        raise HTTPException(status_code=404, detail="Todo doesn't exist.")
+    if arena.user_key != curr_user.id: 
+        raise HTTPException(status_code=403, detail="Permission denied.")
+
+    return db.query(Todo).filter(Todo.arena_key == (arena_key)).order_by(desc(Todo.due_date)).all() 
 
 @app.get("/todo/{id}")
-def get_todo(id):
-    return session.get(Todo, id)
+def get_todo(id, curr_user: User = Depends(get_user), db: Session = Depends(get_db)):
+    
+    todo = db.get(Todo, id)
+
+    if not curr_user: 
+        raise HTTPException(status_code=401, detail="Please log in.")
+    if not todo: 
+        raise HTTPException(status_code=404, detail="Todo doesn't exist.")
+    if todo.user_key != curr_user.id: 
+        raise HTTPException(status_code=403, detail="Permission denied.")
+
+    return todo
 
 @app.patch("/todo/{id}")
-def update_completion(id):
-    todo = session.get(Todo, id)
-    if not todo:
-        raise HTTPException(status_code=404, detail="Todo not found")
+def update_completion(id, curr_user: User = Depends(get_user), db: Session = Depends(get_db)):
+    todo = db.get(Todo, id)
+
+    try:
+        todo.update_completion_status(db, curr_user, id, True)
+    except Exception as error:
+        raise error
     
-    todo.update_completion_status(id, True)
     return {"status": "todo updated"}
 
 @app.patch("/todo/{id}/{length_minutes}")
-def update_length(id, length_minutes:int):
-    todo = session.get(Todo, id)
+def update_length(id, length_minutes:int, curr_user: User = Depends(get_user), db: Session = Depends(get_db)):
+    todo = db.get(Todo, id)
     
-    todo.update_length(id, length_minutes)
+    try:
+        todo.update_length(db, curr_user, id, length_minutes)
+    except Exception as error:
+        raise error
+
     return {"status": "todo updated"}
 
 

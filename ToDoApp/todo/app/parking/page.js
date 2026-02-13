@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*January 24 2026*/
+/*February 12 2026*/
 
 "use client";
 
@@ -37,7 +37,12 @@ export default function Page() {
   const [error, setError] = useState("");
 
   const getTodos = async () => {
-    const res = await fetch("http://localhost:8000/todo/parking");
+    const res = await fetch("http://localhost:8000/todo/parking",{
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+
+  });
     const data = await res.json();
     setTodos(data);
   };
@@ -58,6 +63,7 @@ export default function Page() {
         const res = await fetch("http://localhost:8000/todo", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -81,6 +87,7 @@ export default function Page() {
 
   const clearTodo = async () => {
     const res = await fetch("http://localhost:8000/todo/parking", {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
       method: "DELETE",
     });
 

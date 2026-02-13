@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*January 23 2026*/
+/*February 12 2026*/
 
 "use client";
 
@@ -16,6 +16,7 @@ export default function Page(){
             const res = await fetch("http://localhost:8000/arena", {
                 method: "POST",
                 headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({

@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*January 24 2026*/
+/*February 12 2026*/
 
 "use client";
 
@@ -17,7 +17,11 @@ export default function Page() {
 
 
   useEffect(() => {
-    fetch("http://localhost:8000/arena")
+    fetch("http://localhost:8000/arena", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
       .then(res => res.json())
       .then(data => all_arenas(data))
   }, []);
@@ -25,6 +29,9 @@ export default function Page() {
     const deleteArena = async (id) => {
     const res = await fetch(`http://localhost:8000/arena/${id}`, {
       method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
     });
     all_arenas((prev) => prev.filter((arena) => arena.id !== id));
   };
