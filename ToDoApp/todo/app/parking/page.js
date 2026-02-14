@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 12 2026*/
+/*February 14 2026*/
 
 "use client";
 
@@ -87,8 +87,10 @@ export default function Page() {
 
   const clearTodo = async () => {
     const res = await fetch("http://localhost:8000/todo/parking", {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
       method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
     });
 
     await getTodos(); 
