@@ -424,7 +424,7 @@ def get_parking(curr_user: User = Depends(get_user), db: Session = Depends(get_d
     return db.query(Todo).filter(curr_user.id == Todo.user_key).filter(Todo.arena_key.is_(None)).all()
 
 @app.delete("/todo/parking")
-def get_parking(curr_user: User = Depends(get_user), db: Session = Depends(get_db)):
+def clear_parking(curr_user: User = Depends(get_user), db: Session = Depends(get_db)):
     if not curr_user: 
         raise HTTPException(status_code=401, detail="Please log in.")
     
