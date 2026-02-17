@@ -70,10 +70,6 @@ def verify_token(token:str) -> TokenData:
     except jwt.JWTError:
         raise HTTPException(status_code=401)
 
-class Login(BaseModel):
-    username: str
-    password: str
-
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key = True)
