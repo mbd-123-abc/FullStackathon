@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 12 2026*/
+/*February 20 2026*/
 
 "use client";
 
@@ -13,7 +13,8 @@ export default function Page() {
   const thisArenaId = parseInt(params.get("arenaId"), 10);
   const [arena, setArena] = useState(null);
   const [todos, setTodos] = useState([]);
-
+  const allTodosDone = todos.length > 0 && todos.every(todo => todo.completion_status);
+  const contentHeight = 900 + todos.length * 250;
   useEffect(() => {
     const fetchArena = async () => {
       try {
@@ -57,20 +58,53 @@ export default function Page() {
       STARRYNIGHT: "/NightBackground.png",
       SAKURA: "/SakuraBackground.png",
   };
-
+  const pathImages = {
+      FORREST: "/ForrestPathSegment.png",
+      DAYDREAM: "/DaydreamPathSegment.png",
+      STARRYNIGHT: "/NightPathSegment.png",
+      SAKURA: "/SakuraPathSegment.png",
+  };
   return (
-    <main
-      style={{
-        backgroundImage: arena
-          ? `url(${backImages[arena.theme_key]})`
-          : "none",
-        backgroundPosition: "top center",
-        backgroundSize: "100% auto", 
-        backgroundAttachment: "scroll",
-        minHeight: "250vh",
-        backgroundRepeat: "repeat-y" 
+    <main 
+      style={{ 
+        position: "relative", 
+        minHeight: `${contentHeight}px` 
       }}
     >
+  <div
+    style={{
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: "250vh",
+      backgroundImage: arena
+          ? `url(${backImages[arena.theme_key]})`
+          : "none",
+      backgroundRepeat: "no-repeat",
+      backgroundSize: "100% auto",
+      backgroundPosition: "top center",
+      zIndex: 1,
+    }}
+  />
+
+  <div
+    style={{
+      position: "absolute",
+      top: "220vh",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundImage: arena
+          ? `url(${pathImages[arena.theme_key]})`
+          : "none",
+      backgroundRepeat: "repeat-y",
+      backgroundSize: "100% auto",
+      backgroundPosition: "top center",
+      zIndex: 0,
+    }}
+  />
+
   {todos.map((todo, i) => {
     const y = 900 + (i * 250);
     const x = 710;
@@ -146,9 +180,16 @@ export default function Page() {
       )}
 
       <div className="goalContainer">
-        <img src="/GoalButton.png"
+        <img
+          src="/GoalButton.png"
           className="goalButton"
+          style={{
+            filter: allTodosDone
+              ? "drop-shadow(0 0 45px rgba(255, 200, 120, 1))"
+              : "none",
+            }}
         />
+
         {arena && (
           <div className="goal">
             {arena.goal}
