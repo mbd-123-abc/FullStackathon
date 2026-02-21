@@ -179,7 +179,10 @@ export default function Page() {
         </Link>
       )}
 
-      <div className="goalContainer">
+      <div className="goalContainer"
+      style={{
+            zIndex: 2,
+      }}>
         <img
           src="/GoalButton.png"
           className="goalButton"
