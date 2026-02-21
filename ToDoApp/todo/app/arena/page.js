@@ -174,6 +174,9 @@ export default function Page() {
         <Link key={arena.id}
         href={`/todoForm?arenaId=${arena.id}`}>
           <img className="questsButton"
+          style={{
+            zIndex: 2,
+      }}
             src="/QuestButton.png"
           />
         </Link>
