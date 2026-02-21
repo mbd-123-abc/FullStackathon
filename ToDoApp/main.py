@@ -1,5 +1,5 @@
 #Mahika Bagri
-#February 11 2026
+#February 20 2026
 
 from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Sequence, desc, create_engine
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base, Session
@@ -82,10 +82,12 @@ class User(Base):
 
     @classmethod
     def check_password(cls, username, password, db):
+        if not db.query(User).filter(User.username == username).first():
+            raise HTTPException(status_code=401, detail = "User does not exist.")
         user = db.query(User).filter(User.username == username).first()
         if not argon2.verify(password,user.password):
             user = False
-            raise HTTPException(status_code=401)
+            raise HTTPException(status_code=401, detail = "Incorrect password.")
         
         return user
 
@@ -351,8 +353,8 @@ class Todo(Base):
 
     @classmethod
     def update_length(cls, db, curr_user, id, length_minutes=0):
-        if length_minutes is not None and length_minutes < 0:
-            raise ValueError("The length cannot be less than 0.")
+        if length_minutes < 0:
+            raise HTTPException(400, "Length cannot be negative")
 
         todo = db.get(Todo, id)
 
@@ -469,10 +471,9 @@ def update_completion(id, curr_user: User = Depends(get_user), db: Session = Dep
 
 @app.patch("/todo/{id}/{length_minutes}")
 def update_length(id, length_minutes:int, curr_user: User = Depends(get_user), db: Session = Depends(get_db)):
-    todo = db.get(Todo, id)
     
     try:
-        todo.update_length(db, curr_user, id, length_minutes)
+        Todo.update_length(db, curr_user, id, length_minutes)
     except Exception as error:
         raise error
 

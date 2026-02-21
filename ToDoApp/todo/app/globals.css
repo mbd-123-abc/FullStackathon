@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*January 23 2026*/
+/*February 20 2026*/
 
 * {
   margin: 0;
@@ -327,4 +327,11 @@ page {
 .reminders {
   margin-top:300px;
   z-index: 4;
+}
+
+.errorMessage{
+  font-size: 18px;
+  margin-top:-130px;
+  margin-bottom: 50px;
+  color:#000000;
 }

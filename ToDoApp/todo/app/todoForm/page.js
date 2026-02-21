@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 12 2026*/
+/*February 20 2026*/
 
 "use client";
 
@@ -73,17 +73,17 @@ const getTodos = async () => {
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.detail);
+                setError("⚠️ " + data.detail||"Something went wrong");
             return;
             }
+            setError("");
+            Name("");
+            DueDate("");
+            Length(0);
+            Tag("");
         } catch (errors) {
             setError("Servers Unreachable. Try again later.")
         }
-    
-    Name("");
-    DueDate("");
-    Length(0);
-    Tag("");
     
     getTodos();
     };
@@ -146,6 +146,11 @@ const getTodos = async () => {
                         </div>
                     </button>
                 </form>
+                {error && (
+                        <div className="errorMessage">
+                            {error}
+                        </div>
+                )}
                 <ul 
                     style={{ 
                         position: "relative",
@@ -154,7 +159,7 @@ const getTodos = async () => {
                 {todos !== undefined &&
                     todos.map((todo) => (
                         <ToDo key={todo.id} text={todo.name} />
-                    ))}
+                ))}
                 </ul>
             </div>
     </main>

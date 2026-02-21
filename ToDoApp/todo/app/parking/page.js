@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 14 2026*/
+/*February 20 2026*/
 
 "use client";
 
@@ -74,15 +74,16 @@ export default function Page() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.detail);
+        setError("⚠️ " + data.detail||"Something went wrong");
         return;
       }
+      getTodos();
+      setInput("");
+      setError("");
     } catch (errors) {
       setError("Servers Unreachable. Try again later.")
     }
     }
-    getTodos();
-    setInput("");
   };
 
   const clearTodo = async () => {
@@ -129,7 +130,11 @@ export default function Page() {
             </div>
           </button>
         </div>
-
+              {error && (
+                        <div className="errorMessage">
+                            {error}
+                        </div>
+                )}
         <ul>
           {todos.map((todo) => (
             <ToDo key={todo.id} text={todo.name} />

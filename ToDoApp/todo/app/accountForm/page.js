@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 12 2026*/
+/*February 20 2026*/
 
 "use client";
 
@@ -27,15 +27,15 @@ export default function Page(){
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.detail);
+                setError("⚠️ " + data.detail||"Something went wrong");
             return;
             }
+            setError("");
+            Username("");
+            Password("");
         } catch (errors) {
             setError("Servers Unreachable. Try again later.")
         }
-
-    Username("");
-    Password("");
     };
 
     const handleLogIn = async (e) => {
@@ -56,19 +56,18 @@ export default function Page(){
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.detail);
+                setError("⚠️ " + data.detail||"Something went wrong");
             return;
             }
 
             localStorage.setItem("token", data.access_token);
             router.push("/arenas");
-            
+            setError("");
+            Username("");
+            Password("");
         } catch (errors) {
             setError("Servers Unreachable. Try again later.")
         }
-
-    Username("");
-    Password("");
 
     };
 
@@ -121,6 +120,11 @@ export default function Page(){
                         </div>
                     </button>
                 </div>
+                {error && (
+                    <div className="errorMessage">
+                        {error}
+                    </div>
+                )}
             </div>
         </main>
     );
