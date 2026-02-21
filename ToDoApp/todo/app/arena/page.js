@@ -176,7 +176,7 @@ export default function Page() {
           <img className="questsButton"
           style={{
             zIndex: 2,
-      }}
+          }}
             src="/QuestButton.png"
           />
         </Link>
