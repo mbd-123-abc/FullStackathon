@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 12 2026*/
+/*February 26 2026*/
 
 "use client";
 
@@ -23,13 +23,13 @@ export default function Page() {
     const [menu, setMenu] = useState(false)
     const router = useRouter();
     const [length, Length] = useState(0);
-  
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     const change_complete = async (e) => {
         e.preventDefault()
         /* need to show/throw error*/
         try{
-            const res = await fetch(`http://localhost:8000/todo/${thisTodoId}`, {
+            const res = await fetch(`${API_URL}todo/${thisTodoId}`, {
                 method: "PATCH",
                 headers: {
                   Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -60,7 +60,7 @@ export default function Page() {
         console.log("newLength:", newLength, typeof newLength);
 
         try{
-            const res = await fetch(`http://localhost:8000/todo/${thisTodoId}/${newLength}`, {
+            const res = await fetch(`${API_URL}/todo/${thisTodoId}/${newLength}`, {
                 method: "PATCH",
                 headers: {
                    Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -112,7 +112,7 @@ export default function Page() {
     useEffect(() => {
         const fetchTodo = async () => {
         try {
-            const res = await fetch(`http://localhost:8000/todo/${thisTodoId}`, {
+            const res = await fetch(`${API_URL}/todo/${thisTodoId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },

@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 20 2026*/
+/*February 26 2026*/
 
 "use client";
 
@@ -9,6 +9,7 @@ import Link from "next/link";
 
 const ToDo = (props) => {
     const [isComplete, setIsComplete] = useState(false);
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     return (
         <div style={{
@@ -37,7 +38,7 @@ export default function Page() {
   const [error, setError] = useState("");
 
   const getTodos = async () => {
-    const res = await fetch("http://localhost:8000/todo/parking",{
+    const res = await fetch(`${API_URL}/todo/parking`,{
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -60,7 +61,7 @@ export default function Page() {
     /* need to show/throw error*/
     if (input !== "") {
       try{
-        const res = await fetch("http://localhost:8000/todo", {
+        const res = await fetch(`${API_URL}/todo`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -87,7 +88,7 @@ export default function Page() {
   };
 
   const clearTodo = async () => {
-    const res = await fetch("http://localhost:8000/todo/parking", {
+    const res = await fetch(`${API_URL}/todo/parking`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,

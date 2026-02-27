@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 20 2026*/
+/*February 26 2026*/
 
 "use client";
 
@@ -35,10 +35,11 @@ export default function Page() {
     const [name, Name] = useState("");
     const [length, Length] = useState(0);
     const [date, DueDate] = useState("");
-    const [tag, Tag] = useState("");
+    const [tag, Tag] = useState("")
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const getTodos = async () => {
-    const res = await fetch(`http://localhost:8000/todo/arena/${thisArenaId}`, {
+    const res = await fetch(`${API_URL}/todo/arena/${thisArenaId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -55,7 +56,7 @@ const getTodos = async () => {
         e.preventDefault()
         /* need to show/throw error*/
         try{
-            const res = await fetch("http://localhost:8000/todo", {
+            const res = await fetch(`${API_URL}/todo`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,

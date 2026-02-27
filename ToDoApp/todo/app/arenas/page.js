@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 12 2026*/
+/*February 26 2026*/
 
 "use client";
 
@@ -14,10 +14,10 @@ export default function Page() {
     STARRYNIGHT: "/NightCard.png",
     SAKURA: "/SakuraCard.png",
   };
-
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
-    fetch("http://localhost:8000/arena", {
+    fetch(`${API_URL}/arena`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -27,7 +27,7 @@ export default function Page() {
   }, []);
 
     const deleteArena = async (id) => {
-    const res = await fetch(`http://localhost:8000/arena/${id}`, {
+    const res = await fetch(`${API_URL}/arena/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,

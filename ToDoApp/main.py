@@ -1,5 +1,5 @@
 #Mahika Bagri
-#February 20 2026
+#February 26 2026
 
 from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Sequence, desc, create_engine
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base, Session
@@ -14,9 +14,16 @@ from typing import Optional
 from passlib.hash import argon2 
 from passlib.context import CryptContext
 from jose import jwt, JWTError
-from something import SECRET_KEY, ALGORITHM, TOKEN_EXPIRES
+import os
+from dotenv import load_dotenv
 
-engine = create_engine('sqlite:///orm.db')
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+TOKEN_EXPIRES = int(os.getenv("TOKEN_EXPIRES", 3600))
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -28,7 +35,10 @@ scheme = OAuth2PasswordBearer(tokenUrl = "token")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+        allow_origins=[
+        "http://localhost:3000",
+        "https://your-app-name.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,7 +64,7 @@ def create_token(data:dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expires = datetime.utcnow() + expires_delta
     else:
-        expires = datetime.utcnow() + expires_delta(hours=TOKEN_EXPIRES) 
+        expires = datetime.utcnow() + timedelta(hours=TOKEN_EXPIRES) 
     copy.update({"exp":expires})
 
     en_jwt = jwt.encode(copy, SECRET_KEY, algorithm = ALGORITHM)
@@ -67,7 +77,7 @@ def verify_token(token:str) -> TokenData:
         if  username is None:
             raise HTTPException(status_code=401)
         return TokenData(username = username)
-    except jwt.JWTError:
+    except JWTError:
         raise HTTPException(status_code=401)
 
 class User(Base):
@@ -101,10 +111,6 @@ class User(Base):
             raise ValueError("The password cannot be shorter than 8 characters.")
         if(db.query(User).filter(User.username == username).first()):
             raise ValueError("Username taken; Please try another.")
-        if("'" in password or '"' in password or ';' in password or '--' in password or
-        '*' in password or '\\' in password or '/' in password or '=' in password or
-        '<' in password or '>' in password):
-            raise ValueError("Password cannot contain \', \", ;, --, *, \\, /, =, <, >")
         
     @classmethod
     def add(cls, db, username, password, is_active = True):
@@ -218,7 +224,7 @@ class Arena(Base):
         db.commit()
     
     @classmethod
-    def update(db, curr_user, id, name, goal, completion_status = False, theme_key = "FORREST"):
+    def update(cls, db, curr_user, id, name, goal, completion_status = False, theme_key = "FORREST"):
         Arena.check_data(name, goal, theme_key)
 
         arena = db.get(Arena, id)
@@ -322,7 +328,7 @@ class Todo(Base):
 
     @classmethod
     def delete(cls, db, curr_user, id):
-        todo = db.get(id)
+        todo = db.get(Todo, id)
 
         if not curr_user: 
             raise HTTPException(status_code=401, detail="Please log in.")
@@ -479,5 +485,5 @@ def update_length(id, length_minutes:int, curr_user: User = Depends(get_user), d
 
     return {"status": "todo updated"}
 
-
+#Migrate 
 Base.metadata.create_all(bind=engine)

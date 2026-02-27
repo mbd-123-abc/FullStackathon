@@ -1,0 +1,12 @@
+#Mahika Bagri
+#February 26 2026
+
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+python-jose
+passlib[bcrypt]
+python-dotenv
+starlette
+pydantic

@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 20 2026*/
+/*February 26 2026*/
 
 "use client";
 
@@ -8,12 +8,13 @@ import { useRouter } from "next/navigation";
 
 export default function Page(){
     const router = useRouter();
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     const handleCreate = async (e) => {
         e.preventDefault()
         /* need to show/throw error*/
         try{
-            const res = await fetch("http://localhost:8000/user", {
+            const res = await fetch(`${API_URL}/user`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -42,7 +43,7 @@ export default function Page(){
         e.preventDefault()
         /* need to show/throw error*/
         try{
-            const res = await fetch("http://localhost:8000/token", {
+            const res = await fetch(`${API_URL}/token`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
