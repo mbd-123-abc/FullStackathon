@@ -1,5 +1,5 @@
 /*Mahika Bagri*/
-/*February 26 2026*/
+/*March 10 2026*/
 
 "use client";
 
@@ -9,7 +9,6 @@ import Link from "next/link";
 
 const ToDo = (props) => {
     const [isComplete, setIsComplete] = useState(false);
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     return (
         <div style={{
@@ -33,6 +32,7 @@ const ToDo = (props) => {
 }
 
 export default function Page() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [todos, setTodos] = useState([]);
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
