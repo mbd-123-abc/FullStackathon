@@ -12,7 +12,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://your-app-name.vercel.app",
+        "https://kriyarthika-arena.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
