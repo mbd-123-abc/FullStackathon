@@ -1,12 +1,18 @@
 #Mahika Bagri
-#March 10 2026
+#March 14 2026
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes import user, arena, todo
 
+import subprocess
+
 app = FastAPI()
+
+@app.on_event("startup")
+def startup_migrations():
+    subprocess.run(["alembic", "upgrade", "head"])
 
 app.add_middleware(
     CORSMiddleware,
