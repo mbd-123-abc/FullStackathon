@@ -1,5 +1,5 @@
 #Mahika Bagri
-#March 15 2026
+#March 14 2026
 
 fastapi
 uvicorn[standard]
@@ -11,3 +11,4 @@ python-dotenv
 starlette
 pydantic
 alembic
+argon2-cffi
