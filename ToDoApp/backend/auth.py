@@ -6,11 +6,15 @@ from typing import Optional
 from jose import jwt, JWTError
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
-import os
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models.user import User
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv() 
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = os.environ.get("ALGORITHM", "HS256")

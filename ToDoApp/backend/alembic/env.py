@@ -14,7 +14,10 @@ from models.user import User
 from models.arena import Arena
 from models.todo import Todo
 
+from dotenv import load_dotenv
 import os
+
+load_dotenv() 
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 

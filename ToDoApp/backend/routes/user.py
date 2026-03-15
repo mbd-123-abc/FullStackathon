@@ -1,5 +1,5 @@
 #Mahika Bagri
-#March 10 2026
+#March 14 2026
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -9,7 +9,11 @@ from database import get_db
 from models.user import User
 from schemas.user import UserPy, Login, Token
 from auth import create_token
+
+from dotenv import load_dotenv
 import os
+
+load_dotenv() 
 
 TOKEN_EXPIRES = int(os.environ.get("TOKEN_EXPIRES", 3600))
 
