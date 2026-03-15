@@ -79,7 +79,7 @@ export default function Page(){
     return(
         <main
         style={{
-            backgroundImage: "url('/PageBack.png')",
+            backgroundImage: "url('/pageBack.png')",
             backgroundSize: "fill",
             backgroundPosition: "center",
         }}
