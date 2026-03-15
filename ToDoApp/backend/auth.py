@@ -7,17 +7,14 @@ from jose import jwt, JWTError
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 import os
-from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models.user import User
 
-load_dotenv()
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-TOKEN_EXPIRES = int(os.getenv("TOKEN_EXPIRES", 3600))
+SECRET_KEY = os.environ.get("SECRET_KEY")
+ALGORITHM = os.environ.get("ALGORITHM", "HS256")
+TOKEN_EXPIRES = int(os.environ.get("TOKEN_EXPIRES", 3600))
 
 scheme = OAuth2PasswordBearer(tokenUrl="token")
 

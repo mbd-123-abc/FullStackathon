@@ -11,7 +11,7 @@ from schemas.user import UserPy, Login, Token
 from auth import create_token
 import os
 
-TOKEN_EXPIRES = int(os.getenv("TOKEN_EXPIRES", 3600))
+TOKEN_EXPIRES = int(os.environ.get("TOKEN_EXPIRES", 3600))
 
 router = APIRouter()
 
