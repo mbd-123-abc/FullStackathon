@@ -1,5 +1,5 @@
 #Mahika Bagri
-#February 26 2026
+#March 15 2026
 
 fastapi
 uvicorn[standard]
@@ -10,3 +10,4 @@ passlib[bcrypt]
 python-dotenv
 starlette
 pydantic
+alembic

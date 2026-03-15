@@ -1,3 +1,6 @@
+#Mahika Bagri
+#March 14 2026
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -11,6 +14,12 @@ from models.user import User
 from models.arena import Arena
 from models.todo import Todo
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,6 +29,8 @@ config = context.config
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
