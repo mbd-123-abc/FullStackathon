@@ -1,5 +1,5 @@
 #Mahika Bagri
-#March 14 2026
+#March 19 2026
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +18,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://127.0.0.1:3000",
         "https://kriyarthika-arena-kappa.vercel.app",
     ],
     allow_credentials=True,
