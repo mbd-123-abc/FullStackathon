@@ -19,7 +19,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://kriyarthika-arena.vercel.app",
-        "https://full-stackathon-mahika-s-projects.vercel.app"
+        "https://full-stackathon-mahika-s-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
