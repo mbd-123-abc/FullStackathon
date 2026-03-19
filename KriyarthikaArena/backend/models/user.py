@@ -49,7 +49,6 @@ class User(Base):
         if not any(c in string.punctuation for c in password):
             raise ValueError("The password must contain a special character.")    
 
-
         if db.query(User).filter(User.username == username).first():
             raise ValueError("Please try a different username.")
 
