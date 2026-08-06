@@ -13,7 +13,7 @@ struct SlowbrewApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
-        Settings {
+        SwiftUI.Settings {
             EmptyView()
         }
     }
@@ -111,11 +111,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         // Set terminate handler
-        Task {
-            await stateMachine.setTerminateHandler { [weak self] in
-                DispatchQueue.main.async {
-                    NSApplication.shared.terminate(nil)
-                }
+        stateMachine.terminateHandler = { [weak self] in
+            DispatchQueue.main.async {
+                NSApplication.shared.terminate(nil)
             }
         }
         
@@ -219,10 +217,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         switch state {
         case .paused:
-            await stateMachine.send(.resumeFromPause)
+            await stateMachine.send(.pauseToggled)
             
         case .idle, .walkingIn, .brewing, .walkingOut:
-            await stateMachine.send(.userPaused)
+            await stateMachine.send(.pauseToggled)
         }
     }
     

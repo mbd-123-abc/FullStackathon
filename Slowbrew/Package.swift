@@ -6,12 +6,21 @@ let package = Package(
     platforms: [
         .macOS(.v13)
     ],
+    products: [
+        .executable(name: "Slowbrew", targets: ["Slowbrew"])
+    ],
+    dependencies: [
+        .package(
+            url: "https://github.com/typelift/SwiftCheck.git",
+            from: "0.12.0"
+        )
+    ],
     targets: [
-        .target(
+        .executableTarget(
             name: "Slowbrew",
             path: "Sources/Slowbrew",
             resources: [
-                .copy("Resources/Info.plist")
+                .copy("Resources/Sprites")
             ]
         ),
         .testTarget(
@@ -21,12 +30,6 @@ let package = Package(
                 .product(name: "SwiftCheck", package: "SwiftCheck")
             ],
             path: "Tests/SlowbrewTests"
-        )
-    ],
-    dependencies: [
-        .package(
-            url: "https://github.com/typelift/SwiftCheck.git",
-            from: "0.12.0"
         )
     ]
 )

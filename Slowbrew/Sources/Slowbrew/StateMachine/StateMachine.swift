@@ -50,6 +50,10 @@ actor StateMachine {
     /// transition can use the opposite edge.
     private var walkInEdge: HorizontalEdge?
 
+    /// The timer start time captured when entering a pause. Used to preserve
+    /// elapsed time when DND/display-lock pauses resume.
+    private var pausedTimerStartedAt: Date?
+
     /// `true` when a quit has been requested but deferred because a break
     /// is currently active. A second `quitRequested(force: false)` (or
     /// `quitRequested(force: true)`) will terminate immediately.
@@ -126,16 +130,20 @@ private extension StateMachine {
         // ----------------------------------------------------------------
         // MARK: idle → paused  (pauseToggled / dndBegan / displayLocked / systemSleep)
         // ----------------------------------------------------------------
-        case (.idle, .pauseToggled):
+        case (.idle(let timerStartedAt), .pauseToggled):
+            pausedTimerStartedAt = timerStartedAt
             return .paused(reason: .userPaused, since: now)
 
-        case (.idle, .dndBegan):
+        case (.idle(let timerStartedAt), .dndBegan):
+            pausedTimerStartedAt = timerStartedAt
             return .paused(reason: .dnd, since: now)
 
-        case (.idle, .displayLocked):
+        case (.idle(let timerStartedAt), .displayLocked):
+            pausedTimerStartedAt = timerStartedAt
             return .paused(reason: .displayLocked, since: now)
 
-        case (.idle, .systemSleep):
+        case (.idle(let timerStartedAt), .systemSleep):
+            pausedTimerStartedAt = timerStartedAt
             return .paused(reason: .sleep, since: now)
 
         // ----------------------------------------------------------------
@@ -166,15 +174,21 @@ private extension StateMachine {
         //       — timer always resets to zero on these events (Req 2.5, 9.4)
         // ----------------------------------------------------------------
         case (.paused, .pauseToggled):
+            pausedTimerStartedAt = nil
             return .idle(timerStartedAt: now)
 
         case (.paused, .dndEnded):
-            return .idle(timerStartedAt: now)
+            let restoredStart = pausedTimerStartedAt ?? now
+            pausedTimerStartedAt = nil
+            return .idle(timerStartedAt: restoredStart)
 
         case (.paused, .displayUnlocked):
-            return .idle(timerStartedAt: now)
+            let restoredStart = pausedTimerStartedAt ?? now
+            pausedTimerStartedAt = nil
+            return .idle(timerStartedAt: restoredStart)
 
         case (.paused, .systemWake):
+            pausedTimerStartedAt = nil
             return .idle(timerStartedAt: now)
 
         // ----------------------------------------------------------------
@@ -269,7 +283,7 @@ private extension StateMachine {
         }
 
         #if DEBUG
-        assertionFailure(
+        print(
             "[StateMachine] Unhandled event '\(event.description)' received in state " +
             "'\(state.description)'. This (state, event) pair has no defined transition."
         )

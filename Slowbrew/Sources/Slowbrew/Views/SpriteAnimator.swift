@@ -209,7 +209,8 @@ final class SpriteAnimator {
         }
         
         // Calculate time per frame (minimum 1 second per stage)
-        let stageDuration: TimeInterval = max(1.0, stage.minimumDuration)
+        let stageDurationSeconds = max(1.0, Double(stage.minimumDuration.components.seconds))
+        let stageDuration: TimeInterval = stageDurationSeconds
         let timePerFrame = stageDuration / Double(textures.count)
         
         // Create animation action

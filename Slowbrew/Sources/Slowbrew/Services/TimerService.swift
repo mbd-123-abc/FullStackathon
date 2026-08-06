@@ -103,11 +103,11 @@ actor TimerService<C: Clock> where C.Duration == Duration {
         let fireCallback = onTimerFired
         let deadline = now.advanced(by: interval)
 
-        activeTask = Task { [weak_self = self] in
+        activeTask = Task { [self] in
             do {
                 // Sleep until the deadline. `CancellationError` is thrown if
                 // `cancel()` is called before the deadline.
-                try await weak_self?.clock.sleep(until: deadline, tolerance: nil)
+                try await clock.sleep(until: deadline, tolerance: nil)
                 // Interval elapsed normally — fire the callback.
                 await fireCallback()
             } catch {
@@ -116,7 +116,7 @@ actor TimerService<C: Clock> where C.Duration == Duration {
 
             // Clear the active-task reference so `elapsed` returns .zero
             // once the countdown is complete or cancelled.
-            await weak_self?.clearActiveTask()
+            await clearActiveTask()
         }
     }
 
@@ -136,7 +136,7 @@ actor TimerService<C: Clock> where C.Duration == Duration {
         guard let start = startInstant, activeTask != nil else {
             return .zero
         }
-        return clock.now - start
+        return start.duration(to: clock.now)
     }
 
     // MARK: - Private helpers
