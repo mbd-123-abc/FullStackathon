@@ -84,11 +84,8 @@ The project combines full-stack software engineering with behavioral psychology,
 - [x] SQLAlchemy models and relationships
 - [x] FastAPI backend
 - [ ] Mobile application
-- [ ] Productivity analytics
-- [ ] Habit tracking
 - [ ] Additional themes
-- [ ] Social features
-- [ ] Leaderboards
+- [ ] Positive Reinforcement Banners 
 - [ ] Browser extension for quick task capture
 
 ---
