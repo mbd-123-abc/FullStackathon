@@ -145,7 +145,7 @@ The project combines full-stack software engineering with behavioral psychology,
 
 ---
 
-## Prerequisites
+### Prerequisites
 
 Before running Kriyarthika Arena, install:
 
@@ -155,8 +155,6 @@ Before running Kriyarthika Arena, install:
 - Git
 
 ---
-
-## Installation
 
 ### Clone Repository
 
@@ -209,7 +207,7 @@ http://localhost:3000
 
 ---
 
-## Layout
+### Layout
 
 ```text
 KriyarthikaArena/
@@ -251,7 +249,7 @@ KriyarthikaArena/
 
 ---
 
-## API Overview
+### API Overview
 
 | Method | Endpoint | Description |
 |---------|----------|-------------|
@@ -273,7 +271,7 @@ Interactive API documentation is available at `/docs` while running locally.
 
 ---
 
-## Contributing
+### Contributing
 
 Contributions are welcome.
 
