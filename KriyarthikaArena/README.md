@@ -299,7 +299,7 @@ git push origin feature/your-feature
 
 ---
 
-## Bug Reports
+### Bug Reports
 
 Please open a GitHub Issue including:
 
