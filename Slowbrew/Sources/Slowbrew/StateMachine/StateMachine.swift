@@ -1,0 +1,289 @@
+// StateMachine.swift
+// Slowbrew
+//
+// Central coordinator for all application state transitions.
+// All events are serialised on the actor — no @MainActor bypass.
+
+import Foundation
+
+/// Central state machine actor that processes `AppEvent` values and produces
+/// an updated `AppState`, broadcasting every change through `statePublisher`.
+///
+/// All state mutations and event dispatches are serialised on the actor's
+/// executor. Invalid events are silently ignored in release builds; in `DEBUG`
+/// builds an `assertionFailure` is raised with a description of the invalid
+/// (state, event) pair.
+actor StateMachine {
+
+    // MARK: - State
+
+    /// The current application state. Read from any async context via `await sm.state`.
+    private(set) var state: AppState
+
+    // MARK: - Publisher
+
+    /// Broadcasts every state change to all subscribers.
+    ///
+    /// Uses `AsyncStream.makeStream()` (Swift 5.9) internally so the
+    /// continuation can be held and `yield`-ed from within the actor.
+    nonisolated let statePublisher: AsyncStream<AppState>
+
+    // MARK: - Terminate Handler
+
+    /// Called when the state machine determines an immediate application
+    /// termination is required (force-quit or second soft-quit during a break).
+    ///
+    /// Defaults to a no-op; `AppDelegate` injects `NSApplication.shared.terminate(nil)`
+    /// at bootstrap time.
+    var terminateHandler: @Sendable () -> Void = {}
+
+    // MARK: - Private
+
+    /// Continuation used to emit new state values into `statePublisher`.
+    private let continuation: AsyncStream<AppState>.Continuation
+
+    /// Persisted settings; updated by `settingsSaved` events.
+    private var currentSettings: Settings
+
+    /// The `HorizontalEdge` the character entered from for the current break
+    /// session. Stored when transitioning to `.walkingIn` so the walk-out
+    /// transition can use the opposite edge.
+    private var walkInEdge: HorizontalEdge?
+
+    /// `true` when a quit has been requested but deferred because a break
+    /// is currently active. A second `quitRequested(force: false)` (or
+    /// `quitRequested(force: true)`) will terminate immediately.
+    private(set) var deferredQuit: Bool = false
+
+    // MARK: - Initialisation
+
+    /// Creates a new `StateMachine` with an initial `.idle` state.
+    ///
+    /// - Parameters:
+    ///   - initialState: The starting state. Defaults to `.idle(timerStartedAt: .now)`.
+    ///   - settings: Initial settings to use until a `settingsSaved` event arrives.
+    init(
+        initialState: AppState = .idle(timerStartedAt: Date()),
+        settings: Settings = .default
+    ) {
+        self.state = initialState
+        self.currentSettings = settings
+
+        // Build the publisher and hold the continuation for later yield calls.
+        let (stream, continuation) = AsyncStream<AppState>.makeStream()
+        self.statePublisher = stream
+        self.continuation = continuation
+    }
+
+    // MARK: - Event Processing
+
+    /// Processes a single `AppEvent`, mutating `state` if the event is valid
+    /// for the current state, and broadcasting the new state via `statePublisher`.
+    ///
+    /// Invalid (state, event) combinations are silently discarded. In `DEBUG`
+    /// builds an `assertionFailure` is raised to surface logic errors early.
+    func send(_ event: AppEvent) async {
+        let oldState = state
+        let newState = transition(from: oldState, on: event)
+
+        guard newState != oldState else {
+            // No transition occurred — the event was invalid for this state.
+            // In DEBUG emit a diagnostic; in release silently ignore.
+            debugOnlyAssertInvalidTransition(state: oldState, event: event)
+            return
+        }
+
+        state = newState
+        continuation.yield(newState)
+    }
+
+    // MARK: - Deinitialization
+
+    deinit {
+        continuation.finish()
+    }
+}
+
+// MARK: - Transition Logic
+
+private extension StateMachine {
+
+    /// Pure transition function. Returns the *same* state if the event is
+    /// invalid for the current state (the caller treats equality as "no transition").
+    func transition(from current: AppState, on event: AppEvent) -> AppState {
+        let now = Date()
+
+        switch (current, event) {
+
+        // ----------------------------------------------------------------
+        // MARK: idle → walkingIn  (timerFired)
+        // ----------------------------------------------------------------
+        case (.idle, .timerFired):
+            let edge = HorizontalEdge.allCases.randomElement() ?? .left
+            walkInEdge = edge
+            return .walkingIn(edge: edge, startedAt: now)
+
+        // ----------------------------------------------------------------
+        // MARK: idle → paused  (pauseToggled / dndBegan / displayLocked / systemSleep)
+        // ----------------------------------------------------------------
+        case (.idle, .pauseToggled):
+            return .paused(reason: .userPaused, since: now)
+
+        case (.idle, .dndBegan):
+            return .paused(reason: .dnd, since: now)
+
+        case (.idle, .displayLocked):
+            return .paused(reason: .displayLocked, since: now)
+
+        case (.idle, .systemSleep):
+            return .paused(reason: .sleep, since: now)
+
+        // ----------------------------------------------------------------
+        // MARK: idle — skipNextBreak  (restart timer with fresh Date)
+        // ----------------------------------------------------------------
+        case (.idle, .skipNextBreak):
+            return .idle(timerStartedAt: now)
+
+        // ----------------------------------------------------------------
+        // MARK: idle — settingsSaved  (store settings for next break, preserve timer)
+        // ----------------------------------------------------------------
+        case (.idle, .settingsSaved(let newSettings)):
+            // Store the new settings but keep the same timerStartedAt so
+            // elapsed time is preserved (Requirement 7.6 / Property 16).
+            currentSettings = newSettings
+            // Return the *same* state value — no structural change.
+            return current
+
+        // ----------------------------------------------------------------
+        // MARK: idle — quitRequested (no break active; handled at app level)
+        // ----------------------------------------------------------------
+        case (.idle, .quitRequested):
+            // AppDelegate handles termination. No state change.
+            return current
+
+        // ----------------------------------------------------------------
+        // MARK: paused → idle  (pauseToggled / dndEnded / displayUnlocked / systemWake)
+        //       — timer always resets to zero on these events (Req 2.5, 9.4)
+        // ----------------------------------------------------------------
+        case (.paused, .pauseToggled):
+            return .idle(timerStartedAt: now)
+
+        case (.paused, .dndEnded):
+            return .idle(timerStartedAt: now)
+
+        case (.paused, .displayUnlocked):
+            return .idle(timerStartedAt: now)
+
+        case (.paused, .systemWake):
+            return .idle(timerStartedAt: now)
+
+        // ----------------------------------------------------------------
+        // MARK: walkingIn → brewing  (walkInCompleted)
+        // ----------------------------------------------------------------
+        case (.walkingIn, .walkInCompleted):
+            // snoozeRemaining starts at DailySnoozeCounter.maxPerDay (3).
+            return .brewing(startedAt: now, snoozeRemaining: 3)
+
+        // ----------------------------------------------------------------
+        // MARK: brewing → walkingOut  (countdownExpired)
+        // ----------------------------------------------------------------
+        case (.brewing, .countdownExpired):
+            let exitEdge = walkInEdge?.opposite ?? .right
+            return .walkingOut(edge: exitEdge, startedAt: now)
+
+        // ----------------------------------------------------------------
+        // MARK: brewing → walkingOut  (snoozeTapped, only when snoozeRemaining > 0)
+        // ----------------------------------------------------------------
+        case (.brewing(_, let remaining), .snoozeTapped) where remaining > 0:
+            let exitEdge = walkInEdge?.opposite ?? .right
+            return .walkingOut(edge: exitEdge, startedAt: now)
+
+        // ----------------------------------------------------------------
+        // MARK: brewing — quitRequested(force: false) → defer quit (first time)
+        // ----------------------------------------------------------------
+        case (.brewing, .quitRequested(let force)) where !force && !deferredQuit:
+            deferredQuit = true
+            // No structural state change — menu label change is driven by
+            // `isDeferredQuitPending` which consumers can poll.
+            return current
+
+        // ----------------------------------------------------------------
+        // MARK: brewing — quitRequested (second soft or any force) → terminate
+        // ----------------------------------------------------------------
+        case (.brewing, .quitRequested):
+            // Capture the handler to call outside the switch.
+            let handler = terminateHandler
+            Task {
+                handler()
+            }
+            return current
+
+        // ----------------------------------------------------------------
+        // MARK: walkingOut → idle  (walkOutCompleted)
+        // ----------------------------------------------------------------
+        case (.walkingOut, .walkOutCompleted):
+            // Clear per-session walk-in edge and quit deferral.
+            walkInEdge = nil
+            deferredQuit = false
+            return .idle(timerStartedAt: now)
+
+        // ----------------------------------------------------------------
+        // MARK: Any other state — settingsSaved (store, no structural change)
+        // ----------------------------------------------------------------
+        case (_, .settingsSaved(let newSettings)):
+            currentSettings = newSettings
+            return current
+
+        // ----------------------------------------------------------------
+        // MARK: Default — invalid event for current state (silently ignored)
+        // ----------------------------------------------------------------
+        default:
+            return current
+        }
+    }
+}
+
+// MARK: - Diagnostics
+
+private extension StateMachine {
+
+    /// In `DEBUG` builds, raises `assertionFailure` for unexpected (state, event)
+    /// pairs that returned the same state (no valid transition).
+    ///
+    /// Some events are legitimately no-ops and must NOT trigger an assertion:
+    /// - `settingsSaved` — stored as side-channel data in any state.
+    /// - `quitRequested` — handled at the app level from any state.
+    /// - `snoozeTapped` when `snoozeRemaining == 0` — silently ignored.
+    func debugOnlyAssertInvalidTransition(state: AppState, event: AppEvent) {
+        switch event {
+        case .settingsSaved:
+            return
+        case .quitRequested:
+            return
+        case .snoozeTapped:
+            if case .brewing(_, let remaining) = state, remaining == 0 {
+                return  // Expected no-op when daily snooze limit reached.
+            }
+        default:
+            break
+        }
+
+        #if DEBUG
+        assertionFailure(
+            "[StateMachine] Unhandled event '\(event.description)' received in state " +
+            "'\(state.description)'. This (state, event) pair has no defined transition."
+        )
+        #endif
+    }
+}
+
+// MARK: - Accessors
+
+extension StateMachine {
+
+    /// `true` if a quit was deferred because a break is currently active.
+    var isDeferredQuitPending: Bool { deferredQuit }
+
+    /// The settings currently stored by the state machine (updated by `settingsSaved`).
+    var settings: Settings { currentSettings }
+}
