@@ -117,7 +117,7 @@ The project combines full-stack software engineering with behavioral psychology,
 
 ### Feedback Form
 
-Feedback, feature requests, and suggestions are always welcome.
+* [UI/UX Feedback Form]([https://forms.gle/q3XGMWAPSceWJqf8A](https://forms.gle/5MkAqVbuuW9aNJWG7))
 
 ---
 
