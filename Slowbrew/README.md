@@ -131,7 +131,7 @@ The project combines software engineering, behavioral psychology, and cozy game 
 
 ---
 
-## Prerequisites
+### Prerequisites
 
 Before running SlowBrew, install:
 
@@ -142,9 +142,9 @@ Before running SlowBrew, install:
 
 ---
 
-## Installation
+### Installation
 
-### Clone Repository
+**Clone Repository**
 
 ```bash
 git clone https://github.com/mbd-123-abc/SlowBrew.git
@@ -154,7 +154,7 @@ cd SlowBrew
 
 ---
 
-### Open the Project
+**Open the Project**
 
 ```bash
 open SlowBrew.xcodeproj
@@ -164,7 +164,7 @@ or open the project manually using Xcode.
 
 ---
 
-### Run the Application
+**Run the Application**
 
 Select **My Mac** as the target device and press:
 
@@ -176,7 +176,7 @@ SlowBrew will launch as a native menu bar application.
 
 ---
 
-## Layout
+### Layout
 
 ```text
 SlowBrew/
@@ -205,19 +205,19 @@ SlowBrew/
 
 ---
 
-## Architecture
+### Architecture
 
 SlowBrew follows a modular architecture where each system has a single responsibility.
 
-### Timer Engine
+**Timer Engine**
 
 Responsible for scheduling work sessions, break intervals, pausing timers, and skipping breaks while maintaining synchronization with the user interface.
 
-### Break Manager
+**Break Manager**
 
 Coordinates the complete break experience by displaying the overlay, locking interaction with the desktop, playing animations, and restoring the workspace after the break finishes.
 
-### Character Animation
+**Character Animation**
 
 Controls the café companion's lifecycle:
 
@@ -228,7 +228,7 @@ Controls the café companion's lifecycle:
 
 Each animation sequence is built using frame-based sprite animations.
 
-### Menu Bar Controller
+**Menu Bar Controller**
 
 Provides quick access to:
 
@@ -242,7 +242,7 @@ without interrupting the user's workflow.
 
 ---
 
-## Design Philosophy
+### Design Philosophy
 
 SlowBrew was designed around one simple principle:
 
@@ -252,7 +252,7 @@ Unlike traditional break reminders that rely on notifications users instinctivel
 
 ---
 
-## Contributing
+### Contributing
 
 Contributions are welcome.
 
@@ -282,7 +282,7 @@ Please include screenshots or recordings for any UI-related changes.
 
 ---
 
-## Bug Reports
+### Bug Reports
 
 If you encounter a bug, please create a GitHub Issue including:
 
