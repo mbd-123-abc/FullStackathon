@@ -121,30 +121,27 @@ Feedback, feature requests, and suggestions are always welcome.
 
 ---
 
-# Developer Guide
+## Developer Guide
 
-## Tech Stack
+### Tech Stack
 
-### Frontend
+- [Next.js](https://nextjs.org/) 
+- [React](https://react.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
 
-- **Next.js** — React framework utilizing the App Router architecture
-- **React** — Component-based user interface development
-- **TailwindCSS** — Utility-first styling framework for responsive design
+**Backend**
+- [FastAPI](https://fastapi.tiangolo.com/) 
+- [SQLAlchemy](https://www.sqlalchemy.org/) + [Alembic](https://alembic.sqlalchemy.org/)
+- [Pydantic](https://docs.pydantic.dev/latest/)
+- [python-jose](https://github.com/mpdavis/python-jose) + [Passlib](https://passlib.readthedocs.io/en/stable/) 
 
-### Backend
+**Database**
+- SQLite (local development)
+- PostgreSQL 15 (production via Supabase)
 
-- **FastAPI** — High-performance Python web framework for RESTful APIs
-- **SQLAlchemy** — ORM for database modeling and relationships
-- **Pydantic** — Data validation and request serialization
-
-### Database
-
-- SQLite (development)
-
-### Authentication
-
-- JWT (JSON Web Tokens)
-- Password hashing for secure user authentication
+**Authentication**
+- JWT bearer tokens 
+- bcrypt password hashing 
 
 ---
 
@@ -316,13 +313,13 @@ Please open a GitHub Issue including:
 
 ---
 
-# Contact
+## Contact
 
-## Socials
+### Socials
 
-- **GitHub:** https://github.com/mbd-123-abc
-- **LinkedIn:** https://www.linkedin.com/in/mahika-bagri
-- **Email:** mahika13.3@gmail.com
-- **Discord:** https://discord.com/users/697914065418321961
+* [LinkedIn](www.linkedin.com/in/mahika-bagri)
+* [Email](mahika13.3@gmail.com)
+* [Discord](https://discord.com/users/697914065418321961)
+
 
 
