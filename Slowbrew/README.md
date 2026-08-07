@@ -218,7 +218,7 @@ cd Slowbrew
 **Open the Project**
 
 ```bash
-open SlowBrew.xcodeproj
+open Package.swift
 ```
 
 or open the project manually using Xcode.
