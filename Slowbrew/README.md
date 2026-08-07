@@ -227,7 +227,9 @@ or open the project manually using Xcode.
 
 **Run the Application**
 
-Select **My Mac** as the target device and press:
+```bash
+swift-run Slowbrew
+```
 
 ```
 ⌘ + R
