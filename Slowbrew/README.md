@@ -107,17 +107,17 @@ The project combines software engineering, behavioral psychology, and cozy game 
 
 You can build and run SlowBrew without Xcode using Swift Package Manager:
 
+**Release Build (Optimized)**
+```bash
+swift build -c release
+.build/x86_64-apple-macosx/release/Slowbrew
+```
+
 **Debug Build**
 ```bash
 cd /path/to/Slowbrew
 swift build
 .build/x86_64-apple-macosx/debug/Slowbrew
-```
-
-**Release Build (Optimized)**
-```bash
-swift build -c release
-.build/x86_64-apple-macosx/release/Slowbrew
 ```
 
 **Create macOS App Bundle**
