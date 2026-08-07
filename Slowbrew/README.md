@@ -206,9 +206,11 @@ Before running SlowBrew, install:
 **Clone Repository**
 
 ```bash
-git clone https://github.com/mbd-123-abc/SlowBrew.git
+git clone --filter=blob:none --sparse https://github.com/mbd-123-abc/FullStackathon.git
+cd FullStackathon
+git sparse-checkout set Slowbrew
 
-cd SlowBrew
+cd Slowbrew
 ```
 
 ---
