@@ -181,54 +181,41 @@ final class SpriteAnimator {
     /// - Parameter name: The atlas name (e.g., "WalkIn", "BrewStage1").
     /// - Returns: Array of `SKTexture` sorted alphabetically, or `nil` on failure.
     private func loadAtlas(named name: String) -> [SKTexture]? {
-        print("[SpriteAnimator] 📦 Loading atlas: \(name)")
-        
         // Try to find the atlas in the resource bundle
         guard let resourceBundle = Bundle.main.url(forResource: "Slowbrew_Slowbrew", withExtension: "bundle"),
               let bundle = Bundle(url: resourceBundle) else {
-            print("[SpriteAnimator] ❌ Could not find resource bundle")
             // Try main bundle as fallback
             let atlas = SKTextureAtlas(named: name)
-            print("[SpriteAnimator] 📦 Atlas '\(name)' has \(atlas.textureNames.count) texture names (from main bundle)")
             guard atlas.textureNames.count > 0 else {
                 os_log(.error, "Atlas '%{public}@' failed to load or contains no textures.", name)
                 return nil
             }
             let sortedNames = atlas.textureNames.sorted()
-            print("[SpriteAnimator] 📦 Texture names in '\(name)': \(sortedNames)")
             return sortedNames.map { atlas.textureNamed($0) }
         }
         
         // Check if the atlas directory exists in the bundle
         let atlasPath = "Sprites/\(name).atlas"
         guard let atlasURL = bundle.url(forResource: atlasPath, withExtension: nil) else {
-            print("[SpriteAnimator] ❌ Could not find atlas at path: \(atlasPath)")
             return nil
         }
-        
-        print("[SpriteAnimator] 📦 Found atlas at: \(atlasURL.path)")
         
         // List all PNG files in the atlas directory
         let fileManager = FileManager.default
         guard let files = try? fileManager.contentsOfDirectory(at: atlasURL, includingPropertiesForKeys: nil)
             .filter({ $0.pathExtension == "png" })
             .sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) else {
-            print("[SpriteAnimator] ❌ Could not read contents of atlas directory")
             return nil
         }
-        
-        print("[SpriteAnimator] 📦 Found \(files.count) PNG files in atlas")
         
         // Load textures directly from image files
         let textures = files.compactMap { url -> SKTexture? in
             guard let image = NSImage(contentsOf: url) else {
-                print("[SpriteAnimator] ⚠️ Failed to load image: \(url.lastPathComponent)")
                 return nil
             }
             return SKTexture(image: image)
         }
         
-        print("[SpriteAnimator] ✅ Loaded \(textures.count) textures from '\(name)'")
         return textures.isEmpty ? nil : textures
     }
     
@@ -243,18 +230,13 @@ final class SpriteAnimator {
         let usedStages = Array(stages.prefix(3))
         let stage = usedStages[currentBrewingStageIndex]
         
-        print("[SpriteAnimator] 🎭 Attempting to load brewing stage \(currentBrewingStageIndex + 1)/\(usedStages.count): \(stage.atlasName)")
-        
         // Load the atlas for this stage
         guard let textures = loadAtlas(named: stage.atlasName) else {
             // Fallback: show static image and stop brewing
-            print("[SpriteAnimator] ❌ Failed to load atlas '\(stage.atlasName)', showing fallback")
             showFallbackImage()
             stopBrewing()
             return
         }
-        
-        print("[SpriteAnimator] ✅ Loaded \(textures.count) textures from '\(stage.atlasName)'")
         
         // Get custom duration for this stage
         let stageDuration = getDurationForStage(stage)
@@ -264,7 +246,6 @@ final class SpriteAnimator {
         let animateAction = SKAction.animate(with: textures, timePerFrame: timePerFrame, resize: true, restore: false)
         
         spriteNode.run(animateAction)
-        print("[SpriteAnimator] ▶️ Playing stage \(stage) for \(stageDuration)s (\(textures.count) frames at \(timePerFrame)s per frame)")
         
         // Schedule next stage after this one completes
         brewingStageTimer = Timer.scheduledTimer(withTimeInterval: stageDuration, repeats: false) { [weak self] _ in

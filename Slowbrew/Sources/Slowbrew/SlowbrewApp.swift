@@ -112,7 +112,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         overlayController.onCountdownExpired = { [weak self] in
             Task {
-                print("[AppDelegate] Countdown expired, sending countdownExpired event")
                 await self?.stateMachine?.send(.countdownExpired)
             }
         }
@@ -166,8 +165,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @MainActor
     private func handleStateChange(_ state: AppState) async {
-        print("[AppDelegate] State changed to: \(state)")
-        
         // Update menu bar
         menuBarController.update(state: state, snoozeCount: dailySnoozeCounter.remaining)
         
@@ -177,7 +174,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // Show overlay on the focused screen and start walk-in animation
             let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }) ?? NSScreen.main
             if let targetScreen = screen {
-                print("[AppDelegate] Starting walk-in animation from \(edge)")
                 overlayController.showWalkIn(on: targetScreen, from: edge) { [weak self] in
                     guard let self = self else { return }
                     Task {
@@ -190,12 +186,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // Overlay should already be visible from walk-in; start brewing animation
             let settings = settingsStore.load()
             let durationSeconds = TimeInterval(settings.breakDuration * 60)
-            print("[AppDelegate] Starting brewing animation for \(settings.breakDuration) minutes (\(durationSeconds) seconds)")
             overlayController.startBrewing(duration: durationSeconds)
             
         case .walkingOut(let edge, _):
             // Start walk-out animation
-            print("[AppDelegate] Starting walk-out animation toward \(edge)")
             overlayController.startWalkOut(toward: edge) { [weak self] in
                 guard let self = self else { return }
                 Task {
