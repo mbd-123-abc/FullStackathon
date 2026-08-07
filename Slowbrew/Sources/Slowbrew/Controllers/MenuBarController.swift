@@ -61,7 +61,7 @@ final class MenuBarController {
     /// **Requirement 1.2:** Menu displays "Pause" or "Resume" depending on state.
     /// **Requirement 1.3:** "Quit (confirm)" label shown when quit is deferred.
     func update(state: AppState, snoozeCount: Int) {
-        guard let button = statusItem?.button else { return }
+        guard statusItem != nil else { return }
         
         // Build the menu dynamically
         let menu = NSMenu()
@@ -74,25 +74,24 @@ final class MenuBarController {
         default:
             pauseResumeTitle = "Pause"
         }
-        menu.addItem(withTitle: pauseResumeTitle, action: #selector(pauseToggleTapped), keyEquivalent: "")
+        let pauseItem = menu.addItem(withTitle: pauseResumeTitle, action: #selector(pauseToggleTapped), keyEquivalent: "")
+        pauseItem.target = self
         
         // Settings item
-        menu.addItem(withTitle: "Settings", action: #selector(settingsTapped), keyEquivalent: ",")
+        let settingsItem = menu.addItem(withTitle: "Settings", action: #selector(settingsTapped), keyEquivalent: ",")
+        settingsItem.target = self
         
         // Skip Next Break item
-        menu.addItem(withTitle: "Skip Next Break", action: #selector(skipNextBreakTapped), keyEquivalent: "")
+        let skipItem = menu.addItem(withTitle: "Skip Next Break", action: #selector(skipNextBreakTapped), keyEquivalent: "")
+        skipItem.target = self
         
         // Separator
         menu.addItem(.separator())
         
         // Quit item
         let quitTitle = isDeferredQuitPending ? "Quit (confirm)" : "Quit"
-        menu.addItem(withTitle: quitTitle, action: #selector(quitTapped), keyEquivalent: "q")
-        
-        // Set menu target
-        for item in menu.items {
-            item.target = self
-        }
+        let quitItem = menu.addItem(withTitle: quitTitle, action: #selector(quitTapped), keyEquivalent: "q")
+        quitItem.target = self
         
         statusItem?.menu = menu
     }

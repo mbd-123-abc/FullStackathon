@@ -44,6 +44,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var stateSubscriptionTask: Task<Void, Never>?
     
+    // MARK: - Break Countdown
+    
+    /// Timer that fires when the break duration elapses
+    private var breakCountdownTimer: Timer?
+    
+    /// When the current break started (for countdown calculation)
+    private var breakStartTime: Date?
+    
     // MARK: - Application Lifecycle
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -91,15 +99,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         menuBarController.onQuit = { [weak self] force in
-            Task {
-                await self?.stateMachine?.send(.quitRequested(force: force))
-            }
+            // Directly terminate the app when Quit is clicked
+            NSApplication.shared.terminate(nil)
         }
         
         // Wire overlay callbacks
         overlayController.onSnooze = { [weak self] in
             Task {
                 await self?.handleSnooze()
+            }
+        }
+        
+        overlayController.onCountdownExpired = { [weak self] in
+            Task {
+                print("[AppDelegate] Countdown expired, sending countdownExpired event")
+                await self?.stateMachine?.send(.countdownExpired)
             }
         }
         
@@ -133,30 +147,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        // Check if quit is deferred
-        guard let machine = stateMachine else {
-            return .terminateNow
-        }
-        
-        Task {
-            let isDeferred = await machine.isDeferredQuitPending
-            if isDeferred {
-                // Quit is deferred during active break
-                return
-            }
-        }
-        
-        // Check current state
-        Task {
-            let state = await machine.state
-            if case .brewing = state {
-                // Defer termination during active break
-                menuBarController.setDeferredQuitPending(true)
-                await machine.send(.quitRequested(force: false))
-            }
-        }
-        
-        return .terminateLater
+        // Check if quit is deferred by checking current state synchronously
+        // For now, just allow immediate termination
+        return .terminateNow
     }
     
     // MARK: - State Subscription
@@ -173,40 +166,52 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @MainActor
     private func handleStateChange(_ state: AppState) async {
+        print("[AppDelegate] State changed to: \(state)")
+        
         // Update menu bar
         menuBarController.update(state: state, snoozeCount: dailySnoozeCounter.remaining)
         
         // Handle overlay presentation
         switch state {
-        case .brewing:
-            // Show overlay on the focused screen
+        case .walkingIn(let edge, _):
+            // Show overlay on the focused screen and start walk-in animation
             let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }) ?? NSScreen.main
             if let targetScreen = screen {
-                overlayController.show(on: targetScreen)
+                print("[AppDelegate] Starting walk-in animation from \(edge)")
+                overlayController.showWalkIn(on: targetScreen, from: edge) { [weak self] in
+                    guard let self = self else { return }
+                    Task {
+                        await self.stateMachine?.send(.walkInCompleted)
+                    }
+                }
             }
             
-        case .idle, .paused:
-            // Dismiss overlay
-            overlayController.dismiss()
+        case .brewing:
+            // Overlay should already be visible from walk-in; start brewing animation
+            let settings = settingsStore.load()
+            let durationSeconds = TimeInterval(settings.breakDuration * 60)
+            print("[AppDelegate] Starting brewing animation for \(settings.breakDuration) minutes (\(durationSeconds) seconds)")
+            overlayController.startBrewing(duration: durationSeconds)
             
-        case .walkingIn, .walkingOut:
-            // Animation states - overlay may or may not be visible
-            break
-        }
-        
-        // Handle timer state
-        switch state {
+        case .walkingOut(let edge, _):
+            // Start walk-out animation
+            print("[AppDelegate] Starting walk-out animation toward \(edge)")
+            overlayController.startWalkOut(toward: edge) { [weak self] in
+                guard let self = self else { return }
+                Task {
+                    await self.stateMachine?.send(.walkOutCompleted)
+                }
+            }
+            
         case .idle:
-            // Restart timer with current settings
+            // Dismiss overlay and restart timer
+            overlayController.dismiss()
             let settings = settingsStore.load()
             await timerService.start(interval: settings.breakIntervalDuration)
             
         case .paused:
             // Cancel timer
             await timerService.cancel()
-            
-        default:
-            break
         }
     }
     

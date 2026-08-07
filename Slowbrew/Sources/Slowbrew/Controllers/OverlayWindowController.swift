@@ -5,7 +5,15 @@
 // The window is presented at `.screenSaver + 1` level to ensure it covers all other content.
 
 import AppKit
+import SpriteKit
 import os.log
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    /// Posted when the user presses Escape to emergency dismiss the overlay
+    static let emergencyDismissOverlay = Notification.Name("com.slowbrew.emergencyDismissOverlay")
+}
 
 /// A window controller responsible for presenting and managing the full-screen
 /// break overlay that locks the display during a Slowbrew break session.
@@ -37,11 +45,21 @@ final class OverlayWindowController: NSWindowController {
     /// `StateMachine` (via this closure) that a snooze was requested.
     var onSnooze: (() -> Void)?
     
+    /// Callback invoked when the break countdown expires.
+    ///
+    /// The controller will call this after the break duration elapses.
+    var onCountdownExpired: (() -> Void)?
+    
     /// The screen on which the overlay is currently displayed.
     ///
     /// Stored so we can re-present the overlay on the same screen if it's
     /// unexpectedly dismissed (Requirement 6.5).
     private var targetScreen: NSScreen?
+    
+    /// Timer for the break countdown.
+    ///
+    /// Fires when the break duration elapses, triggering dismissal.
+    private var countdownTimer: Timer?
     
     /// Number of times the overlay has been re-asserted after force-dismiss.
     ///
@@ -62,6 +80,9 @@ final class OverlayWindowController: NSWindowController {
     /// should still be active. Cancelled when `dismiss()` is called intentionally.
     private var reassertTimer: Timer?
     
+    /// The sprite animator for playing brewing animations
+    private var spriteAnimator: SpriteAnimator?
+    
     // MARK: - Initialization
     
     /// Initializes the controller with no window.
@@ -69,6 +90,14 @@ final class OverlayWindowController: NSWindowController {
     /// Call `show(on:)` to create and present the overlay window on a specific screen.
     override init(window: NSWindow? = nil) {
         super.init(window: window)
+        
+        // Register for emergency dismiss notification
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleEmergencyDismiss),
+            name: .emergencyDismissOverlay,
+            object: nil
+        )
     }
     
     required init?(coder: NSCoder) {
@@ -79,24 +108,18 @@ final class OverlayWindowController: NSWindowController {
         // Clean up notification observers and timers
         NotificationCenter.default.removeObserver(self)
         reassertTimer?.invalidate()
+        countdownTimer?.invalidate()
     }
     
     // MARK: - Public Methods
     
-    /// Presents the full-screen overlay on the specified screen.
+    /// Shows the overlay and plays the walk-in animation.
     ///
-    /// Creates a new `NSWindow` configured for full-screen input-blocking overlay,
-    /// sized to exactly cover the target screen's frame.
-    ///
-    /// - Parameter screen: The `NSScreen` on which to present the overlay.
-    ///   Typically the display with active keyboard focus (Requirement 3.7).
-    ///
-    /// **Implementation Details:**
-    /// - Window frame is set to `screen.frame` (Requirement 4.1, Property 8)
-    /// - Window level is `.screenSaver + 1` (Requirement 4.2)
-    /// - Input-blocking view consumes all events not targeting HUD controls (Requirement 4.6)
-    /// - Registers for `NSWindow.willCloseNotification` to detect force-dismiss (Requirement 6.5)
-    func show(on screen: NSScreen) {
+    /// - Parameters:
+    ///   - screen: The `NSScreen` on which to present the overlay.
+    ///   - edge: The edge from which the character walks in.
+    ///   - completion: Called when the walk-in animation completes.
+    func showWalkIn(on screen: NSScreen, from edge: HorizontalEdge, completion: @escaping () -> Void) {
         // Store the target screen for potential re-assertion
         targetScreen = screen
         
@@ -132,6 +155,27 @@ final class OverlayWindowController: NSWindowController {
         if let contentView = overlayWindow.contentView {
             // Insert at index 0 to ensure it's at the bottom of the view hierarchy
             contentView.addSubview(inputBlockingView, positioned: .below, relativeTo: nil)
+            
+            // Add SKView for sprite animations (full screen)
+            let skView = SKView(frame: screen.frame)
+            skView.autoresizingMask = [.width, .height]
+            skView.ignoresSiblingOrder = true
+            skView.showsFPS = false
+            skView.showsNodeCount = false
+            skView.wantsLayer = true
+            skView.layer?.backgroundColor = NSColor.clear.cgColor
+            contentView.addSubview(skView)
+            
+            print("[OverlayWindowController] 🎨 Creating full-screen SKView: \(screen.frame)")
+            
+            // Create sprite animator and start walk-in animation
+            let animator = SpriteAnimator(skView: skView)
+            self.spriteAnimator = animator
+            print("[OverlayWindowController] 🚶 Starting walk-in animation from \(edge)...")
+            animator.playWalkIn(direction: edge) {
+                print("[OverlayWindowController] ✅ Walk-in animation completed")
+                completion()
+            }
         }
         
         // Register for window close notifications to detect force-dismiss
@@ -145,6 +189,68 @@ final class OverlayWindowController: NSWindowController {
         // Set the window and make it key to receive events
         self.window = overlayWindow
         overlayWindow.makeKeyAndOrderFront(nil)
+        
+        os_log(.info, "Overlay window presented on screen: %{public}@", screen.localizedName)
+    }
+    
+    /// Starts the brewing animation and countdown timer.
+    ///
+    /// - Parameter duration: The break duration in seconds. Brewing loops until 5 seconds before end, then triggers walk-out.
+    func startBrewing(duration: TimeInterval) {
+        // Add "Break Time! ☕️" label in center
+        if let contentView = window?.contentView {
+            let label = NSTextField(labelWithString: "Break Time! ☕️")
+            label.font = NSFont.systemFont(ofSize: 72, weight: .bold)
+            label.textColor = .white
+            label.alignment = .center
+            label.sizeToFit()
+            label.frame = CGRect(
+                x: (contentView.frame.width - label.frame.width) / 2,
+                y: (contentView.frame.height - label.frame.height) / 2,
+                width: label.frame.width,
+                height: label.frame.height
+            )
+            label.autoresizingMask = [.minXMargin, .maxXMargin, .minYMargin, .maxYMargin]
+            contentView.addSubview(label)
+        }
+        
+        print("[OverlayWindowController] 🎬 Starting brewing animation...")
+        spriteAnimator?.playBrewing()
+        print("[OverlayWindowController] ✅ Brewing animation started")
+        
+        // Calculate when to trigger walk-out (5 seconds before end)
+        let walkOutTriggerTime = max(5.0, duration - 5.0)
+        
+        // Start countdown timer to trigger walk-out before end
+        print("[OverlayWindowController] Starting countdown timer for \(duration) seconds, walk-out at \(walkOutTriggerTime)s")
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: walkOutTriggerTime, repeats: false) { [weak self] _ in
+            print("[OverlayWindowController] ⏰ \(walkOutTriggerTime)s elapsed! Triggering walk-out")
+            self?.onCountdownExpired?()
+        }
+    }
+    
+    /// Starts the walk-out animation.
+    ///
+    /// - Parameters:
+    ///   - edge: The edge toward which the character walks out.
+    ///   - completion: Called when the walk-out animation completes.
+    func startWalkOut(toward edge: HorizontalEdge, completion: @escaping () -> Void) {
+        // Cancel countdown timer
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+        
+        // Remove the "Break Time!" label
+        window?.contentView?.subviews.forEach { view in
+            if view is NSTextField {
+                view.removeFromSuperview()
+            }
+        }
+        
+        print("[OverlayWindowController] 🚶 Starting walk-out animation toward \(edge)...")
+        spriteAnimator?.playWalkOut(direction: edge) {
+            print("[OverlayWindowController] ✅ Walk-out animation completed")
+            completion()
+        }
     }
     
     /// Dismisses the overlay window.
@@ -155,6 +261,15 @@ final class OverlayWindowController: NSWindowController {
     /// **Note:** This is an intentional dismissal (user completed the break or snoozed).
     /// The re-assertion logic is disabled by cancelling the timer and removing observers.
     func dismiss() {
+        // Stop brewing animation
+        spriteAnimator?.stopBrewing()
+        spriteAnimator = nil
+        print("[OverlayWindowController] 🛑 Stopped brewing animation")
+        
+        // Cancel countdown timer
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+        
         // Cancel any pending re-assertion timer — this is an intentional dismiss
         reassertTimer?.invalidate()
         reassertTimer = nil
@@ -166,6 +281,8 @@ final class OverlayWindowController: NSWindowController {
         window?.close()
         window = nil
         targetScreen = nil
+        
+        print("[OverlayWindowController] Overlay dismissed")
     }
     
     // MARK: - Private Methods
@@ -203,7 +320,16 @@ final class OverlayWindowController: NSWindowController {
         reassertAttemptCount += 1
         os_log(.info, "Re-asserting overlay (attempt %d/%d).", reassertAttemptCount, maxReassertAttempts)
         
-        show(on: screen)
+        // Re-show with walk-in animation
+        showWalkIn(on: screen, from: .right) { }
+    }
+    
+    /// Handles emergency dismiss notification (Escape key pressed).
+    @objc private func handleEmergencyDismiss() {
+        os_log(.info, "🚨 Emergency dismiss triggered!")
+        dismiss()
+        // Notify state machine to transition to idle
+        // This will be wired up via callback in AppDelegate
     }
 }
 
@@ -322,7 +448,29 @@ private final class InputBlockingView: NSView {
     
     /// Intercepts key-down events and consumes them.
     override func keyDown(with event: NSEvent) {
-        // Consume the event — blocks all keyboard shortcuts
+        // EMERGENCY ESCAPE: Escape key or Cmd+Q force dismisses the overlay
+        if event.keyCode == 53 { // Escape key
+            print("[InputBlockingView] 🚨 EMERGENCY ESCAPE: Escape key pressed!")
+            NotificationCenter.default.post(name: .emergencyDismissOverlay, object: nil)
+            return
+        }
+        
+        if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "q" {
+            print("[InputBlockingView] 🚨 EMERGENCY ESCAPE: Cmd+Q pressed!")
+            NSApplication.shared.terminate(nil)
+            return
+        }
+        
+        // Block Control+Arrow keys (Mission Control shortcuts)
+        if event.modifierFlags.contains(.control) {
+            let arrowKeys: [UInt16] = [123, 124, 125, 126] // Left, Right, Down, Up
+            if arrowKeys.contains(event.keyCode) {
+                print("[InputBlockingView] 🚫 Blocked Control+Arrow key")
+                return
+            }
+        }
+        
+        // Consume all other keyboard events
     }
     
     /// Intercepts key-up events and consumes them.

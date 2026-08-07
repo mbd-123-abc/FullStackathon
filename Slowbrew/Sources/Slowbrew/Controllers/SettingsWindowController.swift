@@ -46,12 +46,16 @@ final class SettingsWindowController: NSWindowController {
         
         // Create the window
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 340),
-            styleMask: [.titled, .closable],
+            contentRect: NSRect(x: 0, y: 0, width: 520, height: 480),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         window.title = "Slowbrew Settings"
+        window.isMovable = true
+        window.isMovableByWindowBackground = true
+        window.minSize = NSSize(width: 480, height: 450)
+        window.maxSize = NSSize(width: 800, height: 600)
         window.center()
         
         super.init(window: window)
@@ -85,10 +89,12 @@ final class SettingsWindowController: NSWindowController {
     private func handleSave(_ settings: Settings) {
         do {
             try settingsStore.save(settings)
+            print("[SettingsWindowController] Settings saved successfully: \(settings)")
             onSettingsSaved?(settings)
             close()
         } catch {
             // Error is already displayed in the SwiftUI view's inline alert
+            print("[SettingsWindowController] Failed to save settings: \(error)")
         }
     }
 }
@@ -139,7 +145,7 @@ struct SettingsView: View {
     // MARK: - Body
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 16) {
             // Title
             Text("Preferences")
                 .font(.title2)
@@ -148,7 +154,7 @@ struct SettingsView: View {
             Divider()
             
             // Break Interval
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Break Interval: \(editedSettings.breakInterval) minutes")
                     .font(.headline)
                 Slider(
@@ -165,7 +171,7 @@ struct SettingsView: View {
             }
             
             // Break Duration
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Break Duration: \(editedSettings.breakDuration) minutes")
                     .font(.headline)
                 Slider(
@@ -196,24 +202,31 @@ struct SettingsView: View {
                 Text(error)
                     .foregroundColor(.red)
                     .font(.caption)
-                    .padding(.top, 8)
+                    .padding(.top, 4)
             }
             
             Spacer()
             
-            // Buttons
+            Divider()
+            
+            // Buttons (always at bottom)
             HStack {
-                Button("Cancel", action: onCancel)
-                    .keyboardShortcut(.cancelAction)
+                Button("Cancel") {
+                    onCancel()
+                }
+                .keyboardShortcut(.cancelAction)
                 
                 Spacer()
                 
-                Button("Save", action: handleSave)
-                    .keyboardShortcut(.defaultAction)
+                Button("Save") {
+                    handleSave()
+                }
+                .keyboardShortcut(.defaultAction)
             }
+            .padding(.top, 8)
         }
         .padding(24)
-        .frame(width: 480, height: 340)
+        .frame(minWidth: 480, minHeight: 450)
     }
     
     // MARK: - Private Methods

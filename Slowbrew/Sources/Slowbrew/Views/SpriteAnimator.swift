@@ -68,9 +68,9 @@ final class SpriteAnimator {
     ///
     /// - Parameters:
     ///   - direction: The horizontal edge (`.left` or `.right`) from which the character walks in.
-    ///   - completion: Called when the animation completes (after 3 seconds max).
+    ///   - completion: Called when the animation completes (after 3 seconds).
     ///
-    /// **Requirement 3.4, 3.5:** Walk-in animation must complete within 3 seconds.
+    /// **Animation: 3 seconds, 2 PNGs, character animates in place at full visibility.**
     func playWalkIn(direction: HorizontalEdge, completion: @escaping () -> Void) {
         // Load the walk-in atlas
         guard let textures = loadAtlas(named: "WalkIn") else {
@@ -80,43 +80,52 @@ final class SpriteAnimator {
             return
         }
         
-        // Position sprite at the edge based on direction
-        let startX: CGFloat
-        let endX: CGFloat = scene.size.width / 2
+        // Position sprite at center (character animates in place)
+        spriteNode.position = CGPoint(x: scene.size.width / 2, y: scene.size.height / 2)
         
-        if direction == .left {
-            startX = -spriteNode.size.width / 2
-            spriteNode.xScale = 1.0 // Face right
-        } else {
-            startX = scene.size.width + spriteNode.size.width / 2
-            spriteNode.xScale = -1.0 // Face left (flip horizontally)
-        }
+        // Flip horizontally based on direction
+        spriteNode.xScale = direction == .left ? 1.0 : -1.0
         
-        spriteNode.position = CGPoint(x: startX, y: scene.size.height / 2)
+        // Full visibility immediately - no fade
+        spriteNode.alpha = 1.0
         
-        // Calculate time per frame to complete in 3 seconds
+        // Walk-in: 3 seconds total for 2 PNGs
         let duration: TimeInterval = 3.0
         let timePerFrame = duration / Double(textures.count)
         
-        // Create animation action
+        // Just animate frames, no fade effects
         let animateAction = SKAction.animate(with: textures, timePerFrame: timePerFrame, resize: true, restore: false)
-        let moveAction = SKAction.moveTo(x: endX, duration: duration)
-        let groupAction = SKAction.group([animateAction, moveAction])
         
-        spriteNode.run(groupAction) {
+        spriteNode.run(animateAction) {
             completion()
         }
     }
     
-    /// Starts the looping brewing animation.
+    /// Starts the looping brewing animation with smart timing.
     ///
-    /// Cycles through the 4 brewing stages in order:
-    /// `heatingWater → steeping → pouring → presentingCup` → repeat
-    ///
-    /// Each stage lasts at least 1 second (Requirement 5.2, 5.5).
+    /// Timing strategy to avoid vertigo:
+    /// - Stage 1 (heatingWater): Quick intro (3 seconds)
+    /// - Stage 2 (steeping): Main activity (30 seconds)
+    /// - Stage 3 (pouring): Main activity (30 seconds)  
+    /// - Stage 4 (presentingCup): Quick outro (3 seconds)
+    /// Total: 66 seconds, then loops
     func playBrewing() {
         currentBrewingStageIndex = 0
         playNextBrewingStage()
+    }
+    
+    /// Gets the duration for a specific brewing stage.
+    private func getDurationForStage(_ stage: BrewingStage) -> TimeInterval {
+        switch stage {
+        case .heatingWater:
+            return 30.0  // Main activity - 30 seconds
+        case .steeping:
+            return 30.0  // Main activity - 30 seconds
+        case .pouring:
+            return 30.0  // Main activity - 30 seconds
+        case .presentingCup:
+            return 0.0  // Skip this stage - not used
+        }
     }
     
     /// Stops the brewing animation.
@@ -132,9 +141,9 @@ final class SpriteAnimator {
     ///
     /// - Parameters:
     ///   - direction: The horizontal edge (`.left` or `.right`) toward which the character walks out.
-    ///   - completion: Called when the animation completes (after 3 seconds max).
+    ///   - completion: Called when the animation completes (after 5 seconds).
     ///
-    /// **Requirement 3.6:** Walk-out animation must complete within 3 seconds.
+    /// **Animation: 5 seconds, 3 PNGs, character animates in place at full visibility.**
     func playWalkOut(direction: HorizontalEdge, completion: @escaping () -> Void) {
         // Load the walk-out atlas
         guard let textures = loadAtlas(named: "WalkOut") else {
@@ -144,30 +153,23 @@ final class SpriteAnimator {
             return
         }
         
-        // Position sprite to walk out toward the edge
-        let startX = scene.size.width / 2
-        let endX: CGFloat
+        // Character stays at center (animates in place)
+        spriteNode.position = CGPoint(x: scene.size.width / 2, y: scene.size.height / 2)
         
-        if direction == .left {
-            endX = -spriteNode.size.width / 2
-            spriteNode.xScale = -1.0 // Face left
-        } else {
-            endX = scene.size.width + spriteNode.size.width / 2
-            spriteNode.xScale = 1.0 // Face right
-        }
+        // Flip horizontally based on direction
+        spriteNode.xScale = direction == .left ? -1.0 : 1.0
         
-        spriteNode.position = CGPoint(x: startX, y: scene.size.height / 2)
+        // Full visibility - no fade out
+        spriteNode.alpha = 1.0
         
-        // Calculate time per frame to complete in 3 seconds
-        let duration: TimeInterval = 3.0
+        // Walk-out: 5 seconds total for 3 PNGs
+        let duration: TimeInterval = 5.0
         let timePerFrame = duration / Double(textures.count)
         
-        // Create animation action
+        // Just animate frames, no fade effects
         let animateAction = SKAction.animate(with: textures, timePerFrame: timePerFrame, resize: true, restore: false)
-        let moveAction = SKAction.moveTo(x: endX, duration: duration)
-        let groupAction = SKAction.group([animateAction, moveAction])
         
-        spriteNode.run(groupAction) {
+        spriteNode.run(animateAction) {
             completion()
         }
     }
@@ -179,51 +181,97 @@ final class SpriteAnimator {
     /// - Parameter name: The atlas name (e.g., "WalkIn", "BrewStage1").
     /// - Returns: Array of `SKTexture` sorted alphabetically, or `nil` on failure.
     private func loadAtlas(named name: String) -> [SKTexture]? {
-        let atlas = SKTextureAtlas(named: name)
+        print("[SpriteAnimator] 📦 Loading atlas: \(name)")
         
-        // Check if atlas contains textures
-        guard atlas.textureNames.count > 0 else {
-            os_log(.error, "Atlas '%{public}@' failed to load or contains no textures.", name)
+        // Try to find the atlas in the resource bundle
+        guard let resourceBundle = Bundle.main.url(forResource: "Slowbrew_Slowbrew", withExtension: "bundle"),
+              let bundle = Bundle(url: resourceBundle) else {
+            print("[SpriteAnimator] ❌ Could not find resource bundle")
+            // Try main bundle as fallback
+            let atlas = SKTextureAtlas(named: name)
+            print("[SpriteAnimator] 📦 Atlas '\(name)' has \(atlas.textureNames.count) texture names (from main bundle)")
+            guard atlas.textureNames.count > 0 else {
+                os_log(.error, "Atlas '%{public}@' failed to load or contains no textures.", name)
+                return nil
+            }
+            let sortedNames = atlas.textureNames.sorted()
+            print("[SpriteAnimator] 📦 Texture names in '\(name)': \(sortedNames)")
+            return sortedNames.map { atlas.textureNamed($0) }
+        }
+        
+        // Check if the atlas directory exists in the bundle
+        let atlasPath = "Sprites/\(name).atlas"
+        guard let atlasURL = bundle.url(forResource: atlasPath, withExtension: nil) else {
+            print("[SpriteAnimator] ❌ Could not find atlas at path: \(atlasPath)")
             return nil
         }
         
-        // Sort texture names alphabetically to ensure correct frame order
-        let sortedNames = atlas.textureNames.sorted()
-        return sortedNames.map { atlas.textureNamed($0) }
+        print("[SpriteAnimator] 📦 Found atlas at: \(atlasURL.path)")
+        
+        // List all PNG files in the atlas directory
+        let fileManager = FileManager.default
+        guard let files = try? fileManager.contentsOfDirectory(at: atlasURL, includingPropertiesForKeys: nil)
+            .filter({ $0.pathExtension == "png" })
+            .sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) else {
+            print("[SpriteAnimator] ❌ Could not read contents of atlas directory")
+            return nil
+        }
+        
+        print("[SpriteAnimator] 📦 Found \(files.count) PNG files in atlas")
+        
+        // Load textures directly from image files
+        let textures = files.compactMap { url -> SKTexture? in
+            guard let image = NSImage(contentsOf: url) else {
+                print("[SpriteAnimator] ⚠️ Failed to load image: \(url.lastPathComponent)")
+                return nil
+            }
+            return SKTexture(image: image)
+        }
+        
+        print("[SpriteAnimator] ✅ Loaded \(textures.count) textures from '\(name)'")
+        return textures.isEmpty ? nil : textures
     }
     
-    /// Plays the next brewing stage in the sequence.
+    /// Plays the next brewing stage in the sequence with smart timing.
     ///
-    /// Advances through `BrewingStage.allCases` in order, looping back to the first
-    /// stage after the last one completes (Requirement 5.2, 5.5).
+    /// Only uses first 3 stages (heatingWater, steeping, pouring), then loops back.
+    /// Stage 4 (presentingCup) is skipped.
     private func playNextBrewingStage() {
         let stages = BrewingStage.allCases
-        let stage = stages[currentBrewingStageIndex]
+        
+        // Only use first 3 stages
+        let usedStages = Array(stages.prefix(3))
+        let stage = usedStages[currentBrewingStageIndex]
+        
+        print("[SpriteAnimator] 🎭 Attempting to load brewing stage \(currentBrewingStageIndex + 1)/\(usedStages.count): \(stage.atlasName)")
         
         // Load the atlas for this stage
         guard let textures = loadAtlas(named: stage.atlasName) else {
             // Fallback: show static image and stop brewing
+            print("[SpriteAnimator] ❌ Failed to load atlas '\(stage.atlasName)', showing fallback")
             showFallbackImage()
             stopBrewing()
             return
         }
         
-        // Calculate time per frame (minimum 1 second per stage)
-        let stageDurationSeconds = max(1.0, Double(stage.minimumDuration.components.seconds))
-        let stageDuration: TimeInterval = stageDurationSeconds
+        print("[SpriteAnimator] ✅ Loaded \(textures.count) textures from '\(stage.atlasName)'")
+        
+        // Get custom duration for this stage
+        let stageDuration = getDurationForStage(stage)
         let timePerFrame = stageDuration / Double(textures.count)
         
         // Create animation action
         let animateAction = SKAction.animate(with: textures, timePerFrame: timePerFrame, resize: true, restore: false)
         
         spriteNode.run(animateAction)
+        print("[SpriteAnimator] ▶️ Playing stage \(stage) for \(stageDuration)s (\(textures.count) frames at \(timePerFrame)s per frame)")
         
         // Schedule next stage after this one completes
         brewingStageTimer = Timer.scheduledTimer(withTimeInterval: stageDuration, repeats: false) { [weak self] _ in
             guard let self = self else { return }
             
-            // Advance to next stage (loop back to 0 after last stage)
-            self.currentBrewingStageIndex = (self.currentBrewingStageIndex + 1) % stages.count
+            // Advance to next stage (loop back to 0 after stage 3)
+            self.currentBrewingStageIndex = (self.currentBrewingStageIndex + 1) % usedStages.count
             self.playNextBrewingStage()
         }
     }

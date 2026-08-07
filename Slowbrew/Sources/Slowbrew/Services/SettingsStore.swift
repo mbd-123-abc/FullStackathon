@@ -120,5 +120,8 @@ final class SettingsStore {
         // Encode and persist — only reached when both values are valid.
         let data = try encoder.encode(settings)
         defaults.set(data, forKey: Self.defaultsKey)
+        defaults.synchronize()  // Force immediate write
+        print("[SettingsStore] Saved settings to UserDefaults: \(settings)")
+        print("[SettingsStore] UserDefaults suite: \(defaults.dictionaryRepresentation().keys.contains(Self.defaultsKey) ? "Key exists" : "Key missing")")
     }
 }

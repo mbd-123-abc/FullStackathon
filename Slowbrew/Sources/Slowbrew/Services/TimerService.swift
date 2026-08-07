@@ -98,6 +98,8 @@ actor TimerService<C: Clock> where C.Duration == Duration {
         let now = clock.now
         startInstant = now
 
+        print("[TimerService] Starting timer for interval: \(interval)")
+
         // Capture `self` weakly-equivalent via unowned actor reference.
         // The Task holds an unstructured reference; we clean it up on completion.
         let fireCallback = onTimerFired
@@ -109,9 +111,11 @@ actor TimerService<C: Clock> where C.Duration == Duration {
                 // `cancel()` is called before the deadline.
                 try await clock.sleep(until: deadline, tolerance: nil)
                 // Interval elapsed normally — fire the callback.
+                print("[TimerService] Timer fired! Invoking callback.")
                 await fireCallback()
             } catch {
                 // Task was cancelled (CancellationError) — do NOT fire callback.
+                print("[TimerService] Timer cancelled before firing.")
             }
 
             // Clear the active-task reference so `elapsed` returns .zero
