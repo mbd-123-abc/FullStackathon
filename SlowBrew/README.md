@@ -166,7 +166,7 @@ Now you can double-click `Slowbrew.app` or move it to `/Applications`!
 
 ### Feedback Form
 
-* [UI/UX Feedback Form]([https://forms.gle/q3XGMWAPSceWJqf8A](https://forms.gle/5MkAqVbuuW9aNJWG7))
+* [UI/UX Feedback Form](https://forms.gle/5MkAqVbuuW9aNJWG7)
 
 ---
 
