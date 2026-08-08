@@ -36,6 +36,7 @@ The project combines software engineering, behavioral psychology, and cozy game 
   - [Why Use SlowBrew?](#why-use-slowbrew)
   - [Core Features (MVP)](#core-features-mvp)
   - [Building from Command Line](#building-from-command-line)
+  - [Demo](#Demo)
   - [Feedback Form](#feedback-form)
 - [Developer Guide](#developer-guide)
   - [Tech Stack](#tech-stack)
@@ -154,6 +155,12 @@ EOF
 ```
 
 Now you can double-click `Slowbrew.app` or move it to `/Applications`!
+
+---
+
+### Demo
+
+* [Loom Demo]([https://expo.dev/accounts/mbd_123_abc/projects/campus-fuel/builds/0fa8f86f-8a5b-4d01-9607-8b698267fca3](https://www.loom.com/share/b0a35377514a4c79a19c0b4e05898ffd))
 
 ---
 
