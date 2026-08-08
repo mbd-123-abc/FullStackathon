@@ -160,7 +160,7 @@ Now you can double-click `Slowbrew.app` or move it to `/Applications`!
 
 ### Demo
 
-* [Loom Demo]([https://expo.dev/accounts/mbd_123_abc/projects/campus-fuel/builds/0fa8f86f-8a5b-4d01-9607-8b698267fca3](https://www.loom.com/share/b0a35377514a4c79a19c0b4e05898ffd))
+* [Loom Demo](https://expo.dev/accounts/mbd_123_abc/projects/campus-fuel/builds/0fa8f86f-8a5b-4d01-9607-8b698267fca3](https://www.loom.com/share/b0a35377514a4c79a19c0b4e05898ffd)
 
 ---
 
