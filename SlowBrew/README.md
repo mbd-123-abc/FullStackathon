@@ -106,55 +106,25 @@ The project combines software engineering, behavioral psychology, and cozy game 
 
 ### Building from Command Line
 
-You can build and run SlowBrew without Xcode using Swift Package Manager:
+**Clone Repository**
 
-> **Note:** These commands assume you are already in the `SlowBrew` project directory.
-
-**Release Build (Optimized)**
 ```bash
-swift build -c release
-.build/x86_64-apple-macosx/release/Slowbrew
+git clone --filter=blob:none --sparse https://github.com/mbd-123-abc/FullStackathon.git
+cd FullStackathon
+git sparse-checkout set SlowBrew
+
+cd SlowBrew
 ```
 
-**Create macOS App Bundle**
+**Run the Application**
+
 ```bash
-# Build release version
-swift build -c release
-
-# Create app bundle structure
-mkdir -p Slowbrew.app/Contents/MacOS
-mkdir -p Slowbrew.app/Contents/Resources
-
-# Copy executable and resources
-cp .build/x86_64-apple-macosx/release/Slowbrew Slowbrew.app/Contents/MacOS/
-cp -R .build/x86_64-apple-macosx/release/Slowbrew_Slowbrew.bundle Slowbrew.app/Contents/Resources/
-
-# Create Info.plist
-cat > Slowbrew.app/Contents/Info.plist << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key>
-    <string>Slowbrew</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.slowbrew.app</string>
-    <key>CFBundleName</key>
-    <string>Slowbrew</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>13.0</string>
-    <key>LSUIElement</key>
-    <true/>
-</dict>
-</plist>
-EOF
+swift-run SlowBrew
 ```
 
-Now you can double-click `Slowbrew.app` or move it to `/Applications`!
+```
+⌘ + R
+```
 
 ---
 
@@ -215,8 +185,6 @@ git sparse-checkout set SlowBrew
 cd SlowBrew
 ```
 
----
-
 **Open the Project**
 
 ```bash
@@ -225,7 +193,6 @@ open Package.swift
 
 or open the project manually using Xcode.
 
----
 
 **Run the Application**
 
